@@ -9,7 +9,7 @@ from logging import getLogger
 
 from django.db import models
 
-from pulpcore.plugin.models import Content, ContentArtifact, Remote, Repository, Publisher
+from pulpcore.plugin.models import Content, ContentArtifact, Remote, Repository
 
 logger = getLogger(__name__)
 
@@ -30,16 +30,6 @@ class NpmContent(Content):
         class Meta:
             default_related_name = "%(app_label)s_%(model_name)s"
             unique_together = (field1, field2)
-    """
-
-    TYPE = "npm"
-
-
-class NpmPublisher(Publisher):
-    """
-    A Publisher for NpmContent.
-
-    Define any additional fields for your new publisher if needed.
     """
 
     TYPE = "npm"

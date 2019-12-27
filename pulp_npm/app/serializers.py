@@ -89,22 +89,3 @@ class NpmRepositorySerializer(platform.RepositorySerializer):
     class Meta:
         fields = platform.RepositorySerializer.Meta.fields
         model = models.NpmRepository
-
-
-class NpmPublisherSerializer(platform.PublisherSerializer):
-    """
-    A Serializer for NpmPublisher.
-
-    Add any new fields if defined on NpmPublisher.
-    Similar to the example above, in NpmContentSerializer.
-    Additional validators can be added to the parent validators list
-
-    For example::
-
-    class Meta:
-        validators = platform.PublisherSerializer.Meta.validators + [myValidator1, myValidator2]
-    """
-
-    class Meta:
-        fields = platform.PublisherSerializer.Meta.fields
-        model = models.NpmPublisher

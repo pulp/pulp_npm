@@ -8,13 +8,12 @@ Check `Plugin Writer's Guide`_ for more details.
 from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from pulpcore.plugin import viewsets as core
+from pulpcore.app import viewsets as core
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
-    RepositoryPublishURLSerializer,
     RepositorySyncURLSerializer,
 )
 from pulpcore.plugin.tasking import enqueue_with_reservation
@@ -165,55 +164,13 @@ class NpmRepositoryViewSet(core.RepositoryViewSet):
             [repository, remote],
             kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk},
         )
-        return OperationPostponedResponse(result, request)
+        return core.OperationPostponedResponse(result, request)
 
 
-class NpmRepositoryVersionViewSet(RepositoryVersionViewSet):
+class NpmRepositoryVersionViewSet(core.RepositoryVersionViewSet):
     """
     A ViewSet for a NpmRepositoryVersion represents a single
     Npm repository version.
     """
 
     parent_viewset = NpmRepositoryViewSet
-
-
-class NpmPublisherViewSet(core.PublisherViewSet):
-    """
-    A ViewSet for NpmPublisher.
-
-    Similar to the NpmContentViewSet above, define endpoint_name,
-    queryset and serializer, at a minimum.
-    """
-
-    endpoint_name = "npm"
-    queryset = models.NpmPublisher.objects.all()
-    serializer_class = serializers.NpmPublisherSerializer
-
-    # This decorator is necessary since a publish operation is asyncrounous and returns
-    # the id and href of the publish task.
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to publish content",
-        responses={202: AsyncOperationResponseSerializer},
-    )
-    @detail_route(methods=("post",), serializer_class=RepositoryPublishURLSerializer)
-    def publish(self, request, pk):
-        """
-        Publishes a repository.
-
-        Either the ``repository`` or the ``repository_version`` fields can
-        be provided but not both at the same time.
-        """
-        publisher = self.get_object()
-        serializer = RepositoryPublishURLSerializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        repository_version = serializer.validated_data.get("repository_version")
-
-        result = enqueue_with_reservation(
-            tasks.publish,
-            [repository_version.repository, publisher],
-            kwargs={
-                "publisher_pk": str(publisher.pk),
-                "repository_version_pk": str(repository_version.pk),
-            },
-        )
-        return core.OperationPostponedResponse(result, request)

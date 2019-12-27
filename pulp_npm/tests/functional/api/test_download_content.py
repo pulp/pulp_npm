@@ -6,10 +6,10 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import DISTRIBUTION_PATH
 from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, publish, sync
 
 from pulp_npm.tests.functional.constants import (
+    NPM_DISTRIBUTION_PATH,
     NPM_FIXTURE_URL,
     NPM_PUBLISHER_PATH,
     NPM_REMOTE_PATH,
@@ -79,7 +79,7 @@ class DownloadContentTestCase(unittest.TestCase):
         # Create a distribution.
         body = gen_distribution()
         body["publication"] = publication["pulp_href"]
-        distribution = client.post(DISTRIBUTION_PATH, body)
+        distribution = client.post(NPM_DISTRIBUTION_PATH, body)
         self.addCleanup(client.delete, distribution["pulp_href"])
 
         # Pick a content unit, and download it from both Pulp Fixtures…

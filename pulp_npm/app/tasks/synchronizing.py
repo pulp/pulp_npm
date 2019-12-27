@@ -9,7 +9,7 @@ from pulpcore.plugin.stages import (
     Stage,
 )
 
-from pulp_npm.app.models import NpmContent, NpmRemote
+from pulp_npm.app.models import Package, NpmRemote
 
 
 log = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ class NpmFirstStage(Stage):
         result = await downloader.run()
         # Use ProgressReport to report progress
         for entry in self.read_my_metadata_file_somehow(result.path):
-            unit = NpmContent(entry)  # make the content unit in memory-only
+            unit = Package(entry)  # make the content unit in memory-only
             artifact = Artifact(entry)  # make Artifact in memory-only
             da = DeclarativeArtifact(artifact, entry.url, entry.relative_path, self.remote)
             dc = DeclarativeContent(content=unit, d_artifacts=[da])

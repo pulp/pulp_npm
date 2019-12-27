@@ -6,8 +6,9 @@ import unittest
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config, utils
+from pulp_smash.pulp3.constants import ON_DEMAND_DOWNLOAD_POLICIES
 
-from pulp_npm.tests.functional.constants import DOWNLOAD_POLICIES, NPM_REMOTE_PATH
+from pulp_npm.tests.functional.constants import NPM_REMOTE_PATH
 from pulp_npm.tests.functional.utils import skip_if, gen_npm_remote
 from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
@@ -165,7 +166,7 @@ class RemoteDownloadPolicyTestCase(unittest.TestCase):
         Update the remote policy to a valid value other than `immedaite`
         and verify the new set value.
         """
-        changed_policy = choice([item for item in DOWNLOAD_POLICIES if item != "immediate"])
+        changed_policy = choice([item for item in ON_DEMAND_DOWNLOAD_POLICIES if item != "immediate"])
         self.client.patch(self.remote["pulp_href"], {"policy": changed_policy})
         self.remote.update(self.client.get(self.remote["pulp_href"]))
         self.assertEqual(self.remote["policy"], changed_policy, self.remote)
@@ -200,8 +201,7 @@ def _gen_verbose_remote():
         {
             "password": utils.uuid4(),
             "username": utils.uuid4(),
-            "policy": choice(DOWNLOAD_POLICIES),
-            "validate": choice((False, True)),
+            "policy": choice(ON_DEMAND_DOWNLOAD_POLICIES),
         }
     )
     return attrs

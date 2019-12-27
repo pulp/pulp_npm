@@ -4,10 +4,11 @@ from urllib.parse import urljoin
 
 from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
+    BASE_DISTRIBUTION_PATH,
     BASE_PUBLISHER_PATH,
     BASE_REMOTE_PATH,
     BASE_REPO_PATH,
-    CONTENT_PATH,
+    BASE_CONTENT_PATH,
 )
 
 # FIXME: list any download policies supported by your plugin type here.
@@ -16,11 +17,11 @@ from pulp_smash.pulp3.constants import (
 # DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
 DOWNLOAD_POLICIES = ["immediate"]
 
-# FIXME: replace 'unit' with your own content type names, and duplicate as necessary for each type
-NPM_CONTENT_NAME = "npm.unit"
+NPM_CONTENT_NAME = "npm.package"
 
-# FIXME: replace 'unit' with your own content type names, and duplicate as necessary for each type
-NPM_CONTENT_PATH = urljoin(CONTENT_PATH, "npm/units/")
+NPM_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, 'npm/npm/')
+
+NPM_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "npm/packages/")
 
 NPM_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "npm/npm/")
 

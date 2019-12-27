@@ -6,6 +6,7 @@ Check `Plugin Writer's Guide`_ for more details.
 """
 from rest_framework import serializers
 
+from pulpcore.plugin import models as core_models
 from pulpcore.plugin import serializers as platform
 
 from . import models
@@ -17,11 +18,11 @@ from . import models
 # If you want create content through upload, use "SingleArtifactContentUploadSerializer"
 # If you change this, make sure to do so on "fields" below, also.
 # Make sure your choice here matches up with the create() method of your viewset.
-class NpmContentSerializer(platform.SingleArtifactContentSerializer):
+class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
     """
-    A Serializer for NpmContent.
+    A Serializer for Package.
 
-    Add serializers for the new fields defined in NpmContent and
+    Add serializers for the new fields defined in Package and
     add those fields to the Meta class keeping fields from the parent class as well.
 
     For example::
@@ -34,12 +35,33 @@ class NpmContentSerializer(platform.SingleArtifactContentSerializer):
         fields = platform.SingleArtifactContentSerializer.Meta.fields + (
             'field1', 'field2', 'field3'
         )
-        model = models.NpmContent
+        model = models.Package
     """
 
+    _id = serializers.CharField()
+    _rev = serializers.CharField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    dist_tags = serializers.JSONField()
+    versions = serializers.JSONField()
+    maintainers = serializers.JSONField(default="[]")
+    time = serializers.JSONField()
+    repository = serializers.JSONField()
+    readme = serializers.CharField()
+    readme_filename = serializers.CharField()
+    homepage = serializers.CharField()
+    keywords = serializers.JSONField(default="[]")
+    bugs = serializers.JSONField()
+    users = serializers.JSONField()
+    license = serializers.CharField()
+
     class Meta:
-        fields = platform.SingleArtifactContentSerializer.Meta.fields
-        model = models.NpmContent
+        fields = platform.SingleArtifactContentUploadSerializer.Meta.fields + (
+            "_id", "_rev", "name", "description", "dist_tags", "versions",
+            "maintainers", "time", "repository", "readme", "readme_filename",
+            "homepage", "keywords", "bugs", "users", "license"
+        )
+        model = models.Package
 
 
 class NpmRemoteSerializer(platform.RemoteSerializer):
@@ -47,7 +69,7 @@ class NpmRemoteSerializer(platform.RemoteSerializer):
     A Serializer for NpmRemote.
 
     Add any new fields if defined on NpmRemote.
-    Similar to the example above, in NpmContentSerializer.
+    Similar to the example above, in PackageSerializer.
     Additional validators can be added to the parent validators list
 
     For example::
@@ -59,13 +81,14 @@ class NpmRemoteSerializer(platform.RemoteSerializer):
     'immediate'. To add on-demand support for more 'policy' options, e.g. 'streamed' or 'on_demand',
     re-define the 'policy' option as follows::
 
+    """
+
     policy = serializers.ChoiceField(
         help_text="The policy to use when downloading content. The possible values include: "
                   "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
-        choices=models.Remote.POLICY_CHOICES,
-        default=models.Remote.IMMEDIATE
+        choices=core_models.Remote.POLICY_CHOICES,
+        default=core_models.Remote.IMMEDIATE
     )
-    """
 
     class Meta:
         fields = platform.RemoteSerializer.Meta.fields
@@ -77,7 +100,7 @@ class NpmRepositorySerializer(platform.RepositorySerializer):
     A Serializer for NpmRepository.
 
     Add any new fields if defined on NpmRepository.
-    Similar to the example above, in NpmContentSerializer.
+    Similar to the example above, in PackageSerializer.
     Additional validators can be added to the parent validators list
 
     For example::

@@ -1,21 +1,21 @@
 import unittest
 from django.test import TestCase
 
-from pulp_npm.app.serializers import NpmContentSerializer
-from pulp_npm.app.models import NpmContent
+from pulp_npm.app.serializers import PackageSerializer
+from pulp_npm.app.models import Package
 
 from pulpcore.plugin.models import Artifact
 
 
-# Fill data with sufficient information to create NpmContent
-# Provide sufficient parameters to create the NpmContent object
+# Fill data with sufficient information to create Package
+# Provide sufficient parameters to create the Package object
 # Depending on the base class of the serializer, provide either "_artifact" or "_artifacts"
 @unittest.skip("FIXME: plugin writer action required")
-class TestNpmContentSerializer(TestCase):
-    """Test NpmContentSerializer."""
+class TestPackageSerializer(TestCase):
+    """Test PackageSerializer."""
 
     def setUp(self):
-        """Set up the NpmContentSerializer tests."""
+        """Set up the PackageSerializer tests."""
         self.artifact = Artifact.objects.create(
             md5="ec0df26316b1deb465d2d18af7b600f5",
             sha1="cf6121b0425c2f2e3a2fcfe6f402d59730eb5661",
@@ -27,14 +27,14 @@ class TestNpmContentSerializer(TestCase):
         )
 
     def test_valid_data(self):
-        """Test that the NpmContentSerializer accepts valid data."""
+        """Test that the PackageSerializer accepts valid data."""
         data = {"_artifact": "/pulp/api/v3/artifacts/{}/".format(self.artifact.pk)}
-        serializer = NpmContentSerializer(data=data)
+        serializer = PackageSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
     def test_duplicate_data(self):
-        """Test that the NpmContentSerializer does not accept data."""
-        NpmContent.objects.create(artifact=self.artifact)
+        """Test that the PackageSerializer does not accept data."""
+        Package.objects.create(artifact=self.artifact)
         data = {"_artifact": "/pulp/api/v3/artifacts/{}/".format(self.artifact.pk)}
-        serializer = NpmContentSerializer(data=data)
+        serializer = PackageSerializer(data=data)
         self.assertFalse(serializer.is_valid())

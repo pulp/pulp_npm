@@ -7,14 +7,15 @@ Check `Plugin Writer's Guide`_ for more details.
 
 from logging import getLogger
 
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from pulpcore.plugin.models import Content, ContentArtifact, Remote, Repository
+from pulpcore.plugin.models import Content, Remote, Repository
 
 logger = getLogger(__name__)
 
 
-class NpmContent(Content):
+class Package(Content):
     """
     The "npm" content type.
 
@@ -32,7 +33,24 @@ class NpmContent(Content):
             unique_together = (field1, field2)
     """
 
-    TYPE = "npm"
+    TYPE = 'package'
+
+    _id = models.CharField(max_length=214)
+    _rev = models.CharField(max_length=16)
+    name = models.CharField(max_length=214)
+    description = models.TextField()
+    dist_tags = JSONField(default=dict)
+    versions = JSONField(default=dict)
+    maintainers = JSONField(default=list)
+    time = JSONField(default=dict)
+    repository = JSONField(default=dict)
+    readme = models.TextField()
+    readme_filename = models.CharField(max_length=255)
+    homepage = models.CharField(max_length=255)
+    keywords = JSONField(default=list)
+    bugs = JSONField(default=dict)
+    users = JSONField(default=dict)
+    license = models.CharField(max_length=16)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -60,7 +78,7 @@ class NpmRepository(Repository):
 
     TYPE = "npm"
 
-    CONTENT_TYPES = [NpmContent]
+    CONTENT_TYPES = [Package]
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

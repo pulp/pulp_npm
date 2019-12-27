@@ -11,44 +11,43 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from pulpcore.app import viewsets as core
+from pulpcore.plugin import viewsets as core
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
 )
 from pulpcore.plugin.tasking import enqueue_with_reservation
-from pulpcore.plugin.models import ContentArtifact
 
 from . import models, serializers, tasks
 
 
-class NpmContentFilter(core.ContentFilter):
+class PackageFilter(core.ContentFilter):
     """
-    FilterSet for NpmContent.
+    FilterSet for Package.
     """
 
     class Meta:
-        model = models.NpmContent
-        fields = [
-            # ...
-        ]
+        model = models.Package
+        fields = {
+            'name': ['exact', 'in'],
+        }
 
 
-class NpmContentViewSet(core.ContentViewSet):
+class PackageViewSet(core.SingleArtifactContentUploadViewSet):
     """
-    A ViewSet for NpmContent.
+    A ViewSet for Package.
 
     Define endpoint name which will appear in the API endpoint for this content type.
     For example::
         http://pulp.example.com/pulp/api/v3/content/npm/units/
 
-    Also specify queryset and serializer for NpmContent.
+    Also specify queryset and serializer for Package.
     """
 
-    endpoint_name = "npm"
-    queryset = models.NpmContent.objects.all()
-    serializer_class = serializers.NpmContentSerializer
-    filterset_class = NpmContentFilter
+    endpoint_name = "packages"
+    queryset = models.Package.objects.all()
+    serializer_class = serializers.PackageSerializer
+    filterset_class = PackageFilter
 
     @transaction.atomic
     def create(self, request):
@@ -105,23 +104,11 @@ class NpmContentViewSet(core.ContentViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class NpmRemoteFilter(core.RemoteFilter):
-    """
-    A FilterSet for NpmRemote.
-    """
-
-    class Meta:
-        model = models.NpmRemote
-        fields = [
-            # ...
-        ]
-
-
 class NpmRemoteViewSet(core.RemoteViewSet):
     """
     A ViewSet for NpmRemote.
 
-    Similar to the NpmContentViewSet above, define endpoint_name,
+    Similar to the PackageViewSet above, define endpoint_name,
     queryset and serializer, at a minimum.
     """
 
@@ -134,7 +121,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet):
     """
     A ViewSet for NpmRepository.
 
-    Similar to the NpmContentViewSet above, define endpoint_name,
+    Similar to the PackageViewSet above, define endpoint_name,
     queryset and serializer, at a minimum.
     """
 

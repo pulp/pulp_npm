@@ -34,18 +34,20 @@ class Package(Content):
     """
 
     TYPE = 'package'
+    repo_key_fields = ("_id", "_rev", "name")
 
     _id = models.CharField(max_length=214)
-    _rev = models.CharField(max_length=16)
+    _rev = models.CharField(max_length=64)
     name = models.CharField(max_length=214)
     description = models.TextField()
     dist_tags = JSONField(default=dict)
     versions = JSONField(default=dict)
     maintainers = JSONField(default=list)
     time = JSONField(default=dict)
+    author = JSONField(default=dict)
     repository = JSONField(default=dict)
     readme = models.TextField()
-    readme_filename = models.CharField(max_length=255)
+    readmeFilename = models.CharField(max_length=255)
     homepage = models.CharField(max_length=255)
     keywords = JSONField(default=list)
     bugs = JSONField(default=dict)
@@ -54,6 +56,7 @@ class Package(Content):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = ("_id", "_rev", "name")
 
 
 class NpmRemote(Remote):

@@ -1,4 +1,5 @@
 from gettext import gettext as _
+import json
 import logging
 
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, Repository
@@ -15,7 +16,7 @@ from pulp_npm.app.models import Package, NpmRemote
 log = logging.getLogger(__name__)
 
 
-def synchronize(remote_pk, repository_pk, mirror):
+def synchronize(remote_pk, repository_pk, mirror=False):
     """
     Sync content from the remote repository.
 
@@ -37,10 +38,10 @@ def synchronize(remote_pk, repository_pk, mirror):
         raise ValueError(_("A remote must have a url specified to synchronize."))
 
     # Interpret policy to download Artifacts or not
-    download_artifacts = remote.policy == Remote.IMMEDIATE
-    first_stage = NpmFirstStage(remote)
+    deferred_download = remote.policy == Remote.IMMEDIATE
+    first_stage = NpmFirstStage(remote, deferred_download)
     DeclarativeVersion(
-        first_stage, repository, mirror=mirror, download_artifacts=download_artifacts
+        first_stage, repository, mirror=mirror
     ).create()
 
 
@@ -49,16 +50,19 @@ class NpmFirstStage(Stage):
     The first stage of a pulp_npm sync pipeline.
     """
 
-    def __init__(self, remote):
+    def __init__(self, remote, deferred_download):
         """
         The first stage of a pulp_npm sync pipeline.
 
         Args:
             remote (FileRemote): The remote data to be used when syncing
+            deferred_download (bool): if True the downloading will not happen now. If False, it will
+                happen immediately.
 
         """
         super().__init__()
         self.remote = remote
+        self.deferred_download = deferred_download
 
     async def run(self):
         """
@@ -72,18 +76,43 @@ class NpmFirstStage(Stage):
         downloader = self.remote.get_downloader(url=self.remote.url)
         result = await downloader.run()
         # Use ProgressReport to report progress
-        for entry in self.read_my_metadata_file_somehow(result.path):
-            unit = Package(entry)  # make the content unit in memory-only
-            artifact = Artifact(entry)  # make Artifact in memory-only
-            da = DeclarativeArtifact(artifact, entry.url, entry.relative_path, self.remote)
-            dc = DeclarativeContent(content=unit, d_artifacts=[da])
-            await self.put(dc)
+        data = self.get_json_data(result.path)
+        package = Package(**data)  # make the content unit in memory-only
+        version = self.get_latest_version(data)
+        artifact = Artifact()  # make Artifact in memory-only
+        da = DeclarativeArtifact(
+            artifact,
+            version["url"],
+            version["relative_path"],
+            self.remote,
+            deferred_download=self.deferred_download
+        )
+        dc = DeclarativeContent(content=package, d_artifacts=[da])
+        await self.put(dc)
 
-    def read_my_metadata_file_somehow(self, path):
+    def get_latest_version(self, data):
+        versions = data["versions"]
+
+        latest = max(versions.keys())
+
+        url = versions[latest]["dist"]["tarball"]
+        relative_path = url.split("/")[-1]
+
+        return dict(url=url, relative_path=relative_path)
+
+    def get_json_data(self, path):
         """
         Parse the metadata for npm Content type.
 
         Args:
             path: Path to the metadata file
         """
-        pass
+        with open(path) as fd:
+            data = json.load(fd)
+
+        for key, value in data.items():
+            if "-" in key:
+                data[key.replace("-", "_")] = value
+                del data[key]
+
+        return data

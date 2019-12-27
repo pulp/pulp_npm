@@ -17,8 +17,6 @@ from pulp_npm.tests.functional.utils import gen_npm_remote
 from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
-# Implement sync support before enabling this test.
-@unittest.skip("FIXME: plugin writer action required")
 class BasicSyncTestCase(unittest.TestCase):
     """Sync a repository with the npm plugin."""
 
@@ -51,12 +49,12 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.post(NPM_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
-        body = gen_npm_remote()
+        body = gen_npm_remote(url="https://registry.npmjs.org/commander/")
         remote = self.client.post(NPM_REMOTE_PATH, body)
         self.addCleanup(self.client.delete, remote["pulp_href"])
 
         # Sync the repository.
-        self.assertIsNone(repo["latest_version_href"])
+        self.assertEqual(repo["latest_version_href"], f"{repo['pulp_href']}versions/0/")
         sync(self.cfg, remote, repo)
         repo = self.client.get(repo["pulp_href"])
 
@@ -69,9 +67,8 @@ class BasicSyncTestCase(unittest.TestCase):
         sync(self.cfg, remote, repo)
         repo = self.client.get(repo["pulp_href"])
 
-        self.assertNotEqual(latest_version_href, repo["latest_version_href"])
+        self.assertEqual(latest_version_href, repo["latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), NPM_FIXTURE_SUMMARY)
-        self.assertDictEqual(get_added_content_summary(repo), {})
 
     # This test may not make sense for all plugins, but is likely to be useful
     # for most. Check that it makes sense for yours before enabling it.

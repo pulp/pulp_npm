@@ -46,9 +46,10 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
     versions = serializers.JSONField()
     maintainers = serializers.JSONField(default="[]")
     time = serializers.JSONField()
+    author = serializers.JSONField()
     repository = serializers.JSONField()
     readme = serializers.CharField()
-    readme_filename = serializers.CharField()
+    readmeFilename = serializers.CharField()
     homepage = serializers.CharField()
     keywords = serializers.JSONField(default="[]")
     bugs = serializers.JSONField()
@@ -58,7 +59,7 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
     class Meta:
         fields = platform.SingleArtifactContentUploadSerializer.Meta.fields + (
             "_id", "_rev", "name", "description", "dist_tags", "versions",
-            "maintainers", "time", "repository", "readme", "readme_filename",
+            "maintainers", "time", "author", "repository", "readme", "readmeFilename",
             "homepage", "keywords", "bugs", "users", "license"
         )
         model = models.Package

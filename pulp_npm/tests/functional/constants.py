@@ -34,7 +34,7 @@ NPM_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "npm/")
 """The URL to a npm repository."""
 
 # FIXME: replace this with the actual number of content units in your test fixture
-NPM_FIXTURE_COUNT = 3
+NPM_FIXTURE_COUNT = 1
 """The number of content units available at :data:`NPM_FIXTURE_URL`."""
 
 NPM_FIXTURE_SUMMARY = {NPM_CONTENT_NAME: NPM_FIXTURE_COUNT}

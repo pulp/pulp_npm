@@ -96,3 +96,13 @@ class NpmRepositorySerializer(platform.RepositorySerializer):
     class Meta:
         fields = platform.RepositorySerializer.Meta.fields
         model = models.NpmRepository
+
+
+class NpmPublicationSerializer(platform.PublicationSerializer):
+    """
+    A Serializer for NpmPublication.
+    """
+
+    class Meta:
+        fields = platform.PublicationSerializer.Meta.fields
+        model = models.NpmPublication

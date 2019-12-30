@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from pulpcore.plugin import viewsets as core
+from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
@@ -117,7 +118,7 @@ class NpmRemoteViewSet(core.RemoteViewSet):
     serializer_class = serializers.NpmRemoteSerializer
 
 
-class NpmRepositoryViewSet(core.RepositoryViewSet):
+class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
     """
     A ViewSet for NpmRepository.
 
@@ -161,3 +162,35 @@ class NpmRepositoryVersionViewSet(core.RepositoryVersionViewSet):
     """
 
     parent_viewset = NpmRepositoryViewSet
+
+
+class NpmPublicationViewSet(core.PublicationViewSet):
+    """
+    ViewSet for Npm Publications.
+    """
+
+    endpoint_name = 'npm'
+    queryset = models.NpmPublication.objects.all()
+    serializer_class = serializers.NpmPublicationSerializer
+
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous task to create a new Npm "
+                              "content publication.",
+        responses={202: AsyncOperationResponseSerializer}
+    )
+    def create(self, request):
+        """
+        Dispatches a publish task.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        repository_version = serializer.validated_data.get('repository_version')
+
+        result = enqueue_with_reservation(
+            tasks.publish,
+            [repository_version.repository],
+            kwargs={
+                'repository_version_pk': repository_version.pk
+            }
+        )
+        return core.OperationPostponedResponse(result, request)

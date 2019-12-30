@@ -7,10 +7,9 @@ Check `Plugin Writer's Guide`_ for more details.
 
 from logging import getLogger
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from pulpcore.plugin.models import Content, Remote, Repository
+from pulpcore.plugin.models import Content, Remote, Repository, Publication
 
 logger = getLogger(__name__)
 
@@ -67,6 +66,17 @@ class NpmRepository(Repository):
     TYPE = "npm"
 
     CONTENT_TYPES = [Package]
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+
+
+class NpmPublication(Publication):
+    """
+    Publication for "npm" content.
+    """
+
+    TYPE = 'npm'
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
-    BASE_PUBLISHER_PATH,
+    BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
     BASE_REPO_PATH,
     BASE_CONTENT_PATH,
@@ -27,7 +27,7 @@ NPM_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "npm/npm/")
 
 NPM_REPO_PATH = urljoin(BASE_REPO_PATH, "npm/npm/")
 
-NPM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, "npm/npm/")
+NPM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, 'npm/npm/')
 
 # FIXME: replace this with your own fixture repository URL and metadata
 NPM_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "npm/")

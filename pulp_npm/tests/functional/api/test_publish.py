@@ -7,20 +7,19 @@ from urllib.parse import urljoin
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo, publish, sync
+from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo, sync
 
 from pulp_npm.tests.functional.constants import (
     NPM_CONTENT_NAME,
-    NPM_PUBLISHER_PATH,
+    NPM_PUBLICATION_PATH,
     NPM_REMOTE_PATH,
     NPM_REPO_PATH,
 )
-from pulp_npm.tests.functional.utils import gen_npm_publisher, gen_npm_remote
+from pulp_npm.tests.functional.utils import gen_npm_remote, publish
 from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
 # Implement sync and publish support before enabling this test.
-@unittest.skip("FIXME: plugin writer action required")
 class PublishAnyRepoVersionTestCase(unittest.TestCase):
     """Test whether a particular repository version can be published.
 
@@ -46,7 +45,7 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        body = gen_npm_remote()
+        body = gen_npm_remote(url="https://registry.npmjs.org/commander/4.0.1")
         remote = client.post(NPM_REMOTE_PATH, body)
         self.addCleanup(client.delete, remote["pulp_href"])
 
@@ -54,9 +53,6 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         self.addCleanup(client.delete, repo["pulp_href"])
 
         sync(cfg, remote, repo)
-
-        publisher = client.post(NPM_PUBLISHER_PATH, gen_npm_publisher())
-        self.addCleanup(client.delete, publisher["pulp_href"])
 
         # Step 1
         repo = client.get(repo["pulp_href"])
@@ -66,13 +62,13 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         non_latest = choice(version_hrefs[:-1])
 
         # Step 2
-        publication = publish(cfg, publisher, repo)
+        publication = publish(cfg, repo)
 
         # Step 3
         self.assertEqual(publication["repository_version"], version_hrefs[-1])
 
         # Step 4
-        publication = publish(cfg, publisher, repo, non_latest)
+        publication = publish(cfg, repo, non_latest)
 
         # Step 5
         self.assertEqual(publication["repository_version"], non_latest)
@@ -80,4 +76,4 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         # Step 6
         with self.assertRaises(HTTPError):
             body = {"repository": repo["pulp_href"], "repository_version": non_latest}
-            client.post(urljoin(publisher["pulp_href"], "publish/"), body)
+            client.post(NPM_PUBLICATION_PATH, body)

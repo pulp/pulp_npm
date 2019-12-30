@@ -18,6 +18,7 @@ from pulp_npm.tests.functional.constants import (
     NPM_CONTENT_NAME,
     NPM_CONTENT_PATH,
     NPM_FIXTURE_URL,
+    NPM_PUBLICATION_PATH,
     NPM_REMOTE_PATH,
     NPM_REPO_PATH,
 )
@@ -94,6 +95,27 @@ def populate_pulp(cfg, url=NPM_FIXTURE_URL):
         if repo:
             client.delete(repo["pulp_href"])
     return client.get(NPM_CONTENT_PATH)["results"]
+
+
+def publish(cfg, repo, version_href=None):
+    """Publish a repository.
+
+    :param pulp_smash.config.PulpSmashConfig cfg: Information about the Pulp
+        host.
+    :param repo: A dict of information about the repository.
+    :param version_href: A href for the repo version to be published.
+    :returns: A publication. A dict of information about the just created
+        publication.
+    """
+    if version_href:
+        body = {"repository_version": version_href}
+    else:
+        body = {"repository": repo["pulp_href"]}
+
+    client = api.Client(cfg, api.json_handler)
+    call_report = client.post(NPM_PUBLICATION_PATH, body)
+    tasks = tuple(api.poll_spawned_tasks(cfg, call_report))
+    return client.get(tasks[-1]["created_resources"][0])
 
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)  # pylint:disable=invalid-name

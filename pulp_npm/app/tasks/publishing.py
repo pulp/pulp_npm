@@ -2,46 +2,47 @@ import logging
 from gettext import gettext as _
 
 from pulpcore.plugin.models import (
+    ContentArtifact,
     RepositoryVersion,
-    Publication,
     PublishedArtifact,
     PublishedMetadata,
     RemoteArtifact,
 )
 from pulpcore.plugin.tasking import WorkingDirectory
+from pulp_npm.app.models import NpmPublication
 
 
 log = logging.getLogger(__name__)
 
 
-def publish(publisher_pk, repository_version_pk):
+def publish(repository_version_pk):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
 
     Args:
-        publisher_pk (str): Use the publish settings provided by this publisher.
         repository_version_pk (str): Create a publication from this repository version.
     """
-    publisher = None
     repository_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
-    log.info(
-        _("Publishing: repository={repo}, version={ver}, publisher={pub}").format(
-            repo=repository_version.repository.name,
-            ver=repository_version.number,
-            pub=publisher.name,
-        )
-    )
+    log.info(_('Publishing: repository={repo}, version={version}').format(
+        repo=repository_version.repository.name,
+        version=repository_version.number,
+    ))
+
     with WorkingDirectory():
-        with Publication.create(repository_version, publisher) as publication:
+        with NpmPublication.create(repository_version) as publication:
             # Write any Artifacts (files) to the file system, and the database.
-            #
-            # artifact = YourArtifactWriter.write(relative_path)
-            # published_artifact = PublishedArtifact(
-            #     relative_path=artifact.relative_path,
-            #     publication=publication,
-            #     content_artifact=artifact)
-            # published_artifact.save()
+
+            content = publication.repository_version.content
+            published_artifacts = []
+            for content_artifact in ContentArtifact.objects.filter(content__in=content).iterator():
+                published_artifacts.append(PublishedArtifact(
+                    relative_path=content_artifact.relative_path,
+                    publication=publication,
+                    content_artifact=content_artifact)
+                )
+
+            PublishedArtifact.objects.bulk_create(published_artifacts, batch_size=2000)
 
             # Write any metadata files to the file system, and the database.
             #
@@ -51,6 +52,5 @@ def publish(publisher_pk, repository_version_pk):
             #     publication=publication,
             #     file=File(open(manifest.relative_path, "rb")))
             # metadata.save()
-            pass
 
     log.info(_("Publication: {publication} created").format(publication=publication.pk))

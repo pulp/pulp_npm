@@ -49,7 +49,7 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.post(NPM_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
-        body = gen_npm_remote(url="https://registry.npmjs.org/commander/")
+        body = gen_npm_remote(url="https://registry.npmjs.org/commander/4.0.1")
         remote = self.client.post(NPM_REMOTE_PATH, body)
         self.addCleanup(self.client.delete, remote["pulp_href"])
 

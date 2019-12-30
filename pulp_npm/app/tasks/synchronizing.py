@@ -77,28 +77,18 @@ class NpmFirstStage(Stage):
         result = await downloader.run()
         # Use ProgressReport to report progress
         data = self.get_json_data(result.path)
-        package = Package(**data)  # make the content unit in memory-only
-        version = self.get_latest_version(data)
+        package = Package(name=data["name"], version=data["version"])
         artifact = Artifact()  # make Artifact in memory-only
+        url = data["dist"]["tarball"]
         da = DeclarativeArtifact(
             artifact,
-            version["url"],
-            version["relative_path"],
+            url,
+            url.split("/")[-1],
             self.remote,
             deferred_download=self.deferred_download
         )
         dc = DeclarativeContent(content=package, d_artifacts=[da])
         await self.put(dc)
-
-    def get_latest_version(self, data):
-        versions = data["versions"]
-
-        latest = max(versions.keys())
-
-        url = versions[latest]["dist"]["tarball"]
-        relative_path = url.split("/")[-1]
-
-        return dict(url=url, relative_path=relative_path)
 
     def get_json_data(self, path):
         """
@@ -108,11 +98,4 @@ class NpmFirstStage(Stage):
             path: Path to the metadata file
         """
         with open(path) as fd:
-            data = json.load(fd)
-
-        for key, value in data.items():
-            if "-" in key:
-                data[key.replace("-", "_")] = value
-                del data[key]
-
-        return data
+            return json.load(fd)

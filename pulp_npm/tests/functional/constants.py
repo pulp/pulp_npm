@@ -19,7 +19,7 @@ DOWNLOAD_POLICIES = ["immediate"]
 
 NPM_CONTENT_NAME = "npm.package"
 
-NPM_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, 'npm/npm/')
+NPM_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, "npm/npm/")
 
 NPM_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "npm/packages/")
 
@@ -27,10 +27,9 @@ NPM_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "npm/npm/")
 
 NPM_REPO_PATH = urljoin(BASE_REPO_PATH, "npm/npm/")
 
-NPM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, 'npm/npm/')
+NPM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "npm/npm/")
 
-# FIXME: replace this with your own fixture repository URL and metadata
-NPM_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "npm/")
+NPM_FIXTURE_URL = "https://registry.npmjs.org/"
 """The URL to a npm repository."""
 
 # FIXME: replace this with the actual number of content units in your test fixture

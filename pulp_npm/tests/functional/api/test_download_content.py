@@ -6,7 +6,12 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, sync
+from pulp_smash.pulp3.utils import (
+    download_content_unit,
+    gen_distribution,
+    gen_repo,
+    sync,
+)
 
 from pulp_npm.tests.functional.constants import (
     NPM_DISTRIBUTION_PATH,
@@ -73,13 +78,15 @@ class DownloadContentTestCase(unittest.TestCase):
         # Create a distribution.
         body = gen_distribution()
         body["publication"] = publication["pulp_href"]
-        distribution = client.using_handler(api.task_handler).post(NPM_DISTRIBUTION_PATH, body)
+        distribution = client.using_handler(api.task_handler).post(
+            NPM_DISTRIBUTION_PATH, body
+        )
         self.addCleanup(client.delete, distribution["pulp_href"])
 
         # Pick a content unit, and download it from both Pulp Fixtures…
         unit_path = choice(get_npm_content_paths(repo))
         fixtures_hash = hashlib.sha256(
-            utils.http_get(urljoin("https://registry.npmjs.org/", unit_path))
+            utils.http_get(urljoin(NPM_FIXTURE_URL, unit_path))
         ).hexdigest()
 
         # …and Pulp.

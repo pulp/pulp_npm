@@ -62,7 +62,8 @@ class ContentUnitTestCase(unittest.TestCase):
         # FIXME: "relative_path" is an attribute specific to the File plugin. It is only an
         # example. You should replace this with some other field specific to your content type.
         page = self.client.get(
-            NPM_CONTENT_PATH, params={"relative_path": self.content_unit["relative_path"]}
+            NPM_CONTENT_PATH,
+            params={"relative_path": self.content_unit["relative_path"]},
         )
         self.assertEqual(len(page["results"]), 1)
         for key, val in self.content_unit.items():

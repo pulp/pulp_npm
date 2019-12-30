@@ -2,12 +2,17 @@
 """Tests that publish npm plugin repositories."""
 import unittest
 from random import choice
-from urllib.parse import urljoin
 
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo, sync
+from pulp_smash.pulp3.utils import (
+    gen_repo,
+    get_content,
+    get_versions,
+    modify_repo,
+    sync,
+)
 
 from pulp_npm.tests.functional.constants import (
     NPM_CONTENT_NAME,

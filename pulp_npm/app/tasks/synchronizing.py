@@ -2,7 +2,7 @@ from gettext import gettext as _
 import json
 import logging
 
-from pulpcore.plugin.models import Artifact, ProgressReport, Remote, Repository
+from pulpcore.plugin.models import Artifact, Remote, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -40,9 +40,7 @@ def synchronize(remote_pk, repository_pk, mirror=False):
     # Interpret policy to download Artifacts or not
     deferred_download = remote.policy != Remote.IMMEDIATE
     first_stage = NpmFirstStage(remote, deferred_download)
-    DeclarativeVersion(
-        first_stage, repository, mirror=mirror
-    ).create()
+    DeclarativeVersion(first_stage, repository, mirror=mirror).create()
 
 
 class NpmFirstStage(Stage):
@@ -85,7 +83,7 @@ class NpmFirstStage(Stage):
             url,
             url.split("/")[-1],
             self.remote,
-            deferred_download=self.deferred_download
+            deferred_download=self.deferred_download,
         )
         dc = DeclarativeContent(content=package, d_artifacts=[da])
         await self.put(dc)

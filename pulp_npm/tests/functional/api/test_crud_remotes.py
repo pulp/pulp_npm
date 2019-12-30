@@ -166,7 +166,9 @@ class RemoteDownloadPolicyTestCase(unittest.TestCase):
         Update the remote policy to a valid value other than `immedaite`
         and verify the new set value.
         """
-        changed_policy = choice([item for item in ON_DEMAND_DOWNLOAD_POLICIES if item != "immediate"])
+        changed_policy = choice(
+            [item for item in ON_DEMAND_DOWNLOAD_POLICIES if item != "immediate"]
+        )
         self.client.patch(self.remote["pulp_href"], {"policy": changed_policy})
         self.remote.update(self.client.get(self.remote["pulp_href"]))
         self.assertEqual(self.remote["policy"], changed_policy, self.remote)

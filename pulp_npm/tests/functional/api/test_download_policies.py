@@ -3,7 +3,12 @@
 import unittest
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.utils import gen_repo, get_added_content_summary, get_content_summary, sync
+from pulp_smash.pulp3.utils import (
+    gen_repo,
+    get_added_content_summary,
+    get_content_summary,
+    sync,
+)
 
 from pulp_npm.tests.functional.constants import (
     NPM_FIXTURE_SUMMARY,

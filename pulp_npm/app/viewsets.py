@@ -29,9 +29,7 @@ class PackageFilter(core.ContentFilter):
 
     class Meta:
         model = models.Package
-        fields = {
-            'name': ['exact', 'in'],
-        }
+        fields = {"name": ["exact", "in"]}
 
 
 class PackageViewSet(core.SingleArtifactContentUploadViewSet):
@@ -102,7 +100,9 @@ class PackageViewSet(core.SingleArtifactContentUploadViewSet):
         # ========================================
 
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 class NpmRemoteViewSet(core.RemoteViewSet):
@@ -143,7 +143,9 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
         Dispatches a sync task.
         """
         repository = self.get_object()
-        serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
+        serializer = RepositorySyncURLSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         remote = serializer.validated_data.get("remote")
 
@@ -157,8 +159,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
 
 class NpmRepositoryVersionViewSet(core.RepositoryVersionViewSet):
     """
-    A ViewSet for a NpmRepositoryVersion represents a single
-    Npm repository version.
+    A ViewSet for a NpmRepositoryVersion represents a single Npm repository version.
     """
 
     parent_viewset = NpmRepositoryViewSet
@@ -169,14 +170,14 @@ class NpmPublicationViewSet(core.PublicationViewSet):
     ViewSet for Npm Publications.
     """
 
-    endpoint_name = 'npm'
+    endpoint_name = "npm"
     queryset = models.NpmPublication.objects.all()
     serializer_class = serializers.NpmPublicationSerializer
 
     @swagger_auto_schema(
         operation_description="Trigger an asynchronous task to create a new Npm "
-                              "content publication.",
-        responses={202: AsyncOperationResponseSerializer}
+        "content publication.",
+        responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request):
         """
@@ -184,14 +185,12 @@ class NpmPublicationViewSet(core.PublicationViewSet):
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        repository_version = serializer.validated_data.get('repository_version')
+        repository_version = serializer.validated_data.get("repository_version")
 
         result = enqueue_with_reservation(
             tasks.publish,
             [repository_version.repository],
-            kwargs={
-                'repository_version_pk': repository_version.pk
-            }
+            kwargs={"repository_version_pk": repository_version.pk},
         )
         return core.OperationPostponedResponse(result, request)
 
@@ -201,6 +200,6 @@ class NpmDistributionViewSet(core.BaseDistributionViewSet):
     ViewSet for NPM Distributions.
     """
 
-    endpoint_name = 'npm'
+    endpoint_name = "npm"
     queryset = models.NpmDistribution.objects.all()
     serializer_class = serializers.NpmDistributionSerializer

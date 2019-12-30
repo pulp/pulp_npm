@@ -5,7 +5,12 @@ import unittest
 from pulp_smash import api, cli, config
 from pulp_smash.exceptions import TaskReportError
 from pulp_smash.pulp3.constants import MEDIA_PATH
-from pulp_smash.pulp3.utils import gen_repo, get_added_content_summary, get_content_summary, sync
+from pulp_smash.pulp3.utils import (
+    gen_repo,
+    get_added_content_summary,
+    get_content_summary,
+    sync,
+)
 
 from pulp_npm.tests.functional.constants import (
     NPM_FIXTURE_SUMMARY,

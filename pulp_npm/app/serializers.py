@@ -44,7 +44,9 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
 
     class Meta:
         fields = platform.SingleArtifactContentUploadSerializer.Meta.fields + (
-            "name", "version", "relative_path"
+            "name",
+            "version",
+            "relative_path",
         )
         model = models.Package
 
@@ -70,9 +72,9 @@ class NpmRemoteSerializer(platform.RemoteSerializer):
 
     policy = serializers.ChoiceField(
         help_text="The policy to use when downloading content. The possible values include: "
-                  "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
+        "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
         choices=core_models.Remote.POLICY_CHOICES,
-        default=core_models.Remote.IMMEDIATE
+        default=core_models.Remote.IMMEDIATE,
     )
 
     class Meta:

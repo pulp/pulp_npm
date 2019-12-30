@@ -11,11 +11,10 @@ from django.db import models
 
 from pulpcore.plugin.models import (
     Content,
-    ContentArtifact,
     Remote,
     Repository,
     Publication,
-    PublicationDistribution
+    PublicationDistribution,
 )
 
 logger = getLogger(__name__)
@@ -39,7 +38,7 @@ class Package(Content):
             unique_together = (field1, field2)
     """
 
-    TYPE = 'package'
+    TYPE = "package"
     repo_key_fields = ("name", "version")
 
     name = models.CharField(max_length=214)
@@ -90,7 +89,7 @@ class NpmPublication(Publication):
     Publication for "npm" content.
     """
 
-    TYPE = 'npm'
+    TYPE = "npm"
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -101,7 +100,7 @@ class NpmDistribution(PublicationDistribution):
     Distribution for "npm" content.
     """
 
-    TYPE = 'npm'
+    TYPE = "npm"
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

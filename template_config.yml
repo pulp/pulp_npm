@@ -2,8 +2,8 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins: []
-black: false
-check_commit_message: false
+black: true
+check_commit_message: true
 cherry_pick_automation: false
 coverage: false
 deploy_client_to_pypi: false

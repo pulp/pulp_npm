@@ -9,7 +9,14 @@ from logging import getLogger
 
 from django.db import models
 
-from pulpcore.plugin.models import Content, Remote, Repository, Publication
+from pulpcore.plugin.models import (
+    Content,
+    ContentArtifact,
+    Remote,
+    Repository,
+    Publication,
+    PublicationDistribution
+)
 
 logger = getLogger(__name__)
 
@@ -37,6 +44,13 @@ class Package(Content):
 
     name = models.CharField(max_length=214)
     version = models.CharField(max_length=16)
+
+    @property
+    def relative_path(self):
+        """
+        Returns relative_path.
+        """
+        return f"{self.name}/-/{self.name}-{self.version}.tgz"
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -74,6 +88,17 @@ class NpmRepository(Repository):
 class NpmPublication(Publication):
     """
     Publication for "npm" content.
+    """
+
+    TYPE = 'npm'
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+
+
+class NpmDistribution(PublicationDistribution):
+    """
+    Distribution for "npm" content.
     """
 
     TYPE = 'npm'

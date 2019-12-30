@@ -6,17 +6,16 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, publish, sync
+from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, sync
 
 from pulp_npm.tests.functional.constants import (
     NPM_DISTRIBUTION_PATH,
     NPM_FIXTURE_URL,
-    NPM_PUBLISHER_PATH,
     NPM_REMOTE_PATH,
     NPM_REPO_PATH,
 )
 from pulp_npm.tests.functional.utils import (
-    gen_npm_publisher,
+    publish,
     gen_npm_remote,
     get_npm_content_paths,
 )
@@ -25,7 +24,6 @@ from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa
 
 # Implement tests.functional.utils.get_npm_content_unit_paths(),
 # as well as sync and publish support before enabling this test.
-@unittest.skip("FIXME: plugin writer action required")
 class DownloadContentTestCase(unittest.TestCase):
     """Verify whether content served by pulp can be downloaded."""
 
@@ -61,35 +59,31 @@ class DownloadContentTestCase(unittest.TestCase):
         repo = client.post(NPM_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo["pulp_href"])
 
-        body = gen_npm_remote()
+        body = gen_npm_remote(url="https://registry.npmjs.org/commander/4.0.1")
         remote = client.post(NPM_REMOTE_PATH, body)
         self.addCleanup(client.delete, remote["pulp_href"])
 
         sync(cfg, remote, repo)
         repo = client.get(repo["pulp_href"])
 
-        # Create a publisher.
-        publisher = client.post(NPM_PUBLISHER_PATH, gen_npm_publisher())
-        self.addCleanup(client.delete, publisher["pulp_href"])
-
         # Create a publication.
-        publication = publish(cfg, publisher, repo)
+        publication = publish(cfg, repo)
         self.addCleanup(client.delete, publication["pulp_href"])
 
         # Create a distribution.
         body = gen_distribution()
         body["publication"] = publication["pulp_href"]
-        distribution = client.post(NPM_DISTRIBUTION_PATH, body)
+        distribution = client.using_handler(api.task_handler).post(NPM_DISTRIBUTION_PATH, body)
         self.addCleanup(client.delete, distribution["pulp_href"])
 
         # Pick a content unit, and download it from both Pulp Fixtures…
         unit_path = choice(get_npm_content_paths(repo))
         fixtures_hash = hashlib.sha256(
-            utils.http_get(urljoin(NPM_FIXTURE_URL, unit_path))
+            utils.http_get(urljoin("https://registry.npmjs.org/", unit_path))
         ).hexdigest()
 
         # …and Pulp.
-        content = download_content_unit(cfg, distribution, unit_path)
+        content = download_content_unit(cfg, distribution, unit_path.split("/")[-1])
         pulp_hash = hashlib.sha256(content).hexdigest()
 
         self.assertEqual(fixtures_hash, pulp_hash)

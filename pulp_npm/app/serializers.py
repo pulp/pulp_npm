@@ -40,10 +40,11 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
 
     name = serializers.CharField()
     version = serializers.CharField()
+    relative_path = serializers.CharField()
 
     class Meta:
         fields = platform.SingleArtifactContentUploadSerializer.Meta.fields + (
-            "name", "version"
+            "name", "version", "relative_path"
         )
         model = models.Package
 
@@ -106,3 +107,13 @@ class NpmPublicationSerializer(platform.PublicationSerializer):
     class Meta:
         fields = platform.PublicationSerializer.Meta.fields
         model = models.NpmPublication
+
+
+class NpmDistributionSerializer(platform.PublicationDistributionSerializer):
+    """
+    Serializer for NPM Distributions.
+    """
+
+    class Meta:
+        fields = platform.PublicationDistributionSerializer.Meta.fields
+        model = models.NpmDistribution

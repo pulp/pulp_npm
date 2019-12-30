@@ -38,7 +38,7 @@ def synchronize(remote_pk, repository_pk, mirror=False):
         raise ValueError(_("A remote must have a url specified to synchronize."))
 
     # Interpret policy to download Artifacts or not
-    deferred_download = remote.policy == Remote.IMMEDIATE
+    deferred_download = remote.policy != Remote.IMMEDIATE
     first_stage = NpmFirstStage(remote, deferred_download)
     DeclarativeVersion(
         first_stage, repository, mirror=mirror

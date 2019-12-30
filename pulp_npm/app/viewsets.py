@@ -194,3 +194,13 @@ class NpmPublicationViewSet(core.PublicationViewSet):
             }
         )
         return core.OperationPostponedResponse(result, request)
+
+
+class NpmDistributionViewSet(core.BaseDistributionViewSet):
+    """
+    ViewSet for NPM Distributions.
+    """
+
+    endpoint_name = 'npm'
+    queryset = models.NpmDistribution.objects.all()
+    serializer_class = serializers.NpmDistributionSerializer

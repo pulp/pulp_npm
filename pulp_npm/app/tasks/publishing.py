@@ -27,7 +27,6 @@ def publish(repository_version_pk):
     with WorkingDirectory():
         with NpmPublication.create(repository_version) as publication:
             # Write any Artifacts (files) to the file system, and the database.
-            publication.settings["guess_encoding"] = False
             content = publication.repository_version.content
             published_artifacts = []
             for content_artifact in ContentArtifact.objects.filter(

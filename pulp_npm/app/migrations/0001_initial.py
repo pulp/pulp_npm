@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [("core", "0019_publication_settings")]
+    dependencies = [("core", "0018_auto_20191127_2350")]
 
     operations = [
         migrations.CreateModel(

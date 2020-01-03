@@ -222,14 +222,18 @@ class PublishedPackageViewSet(APIView):
         Return a published package.
         """
         data = {}
-        package = models.Package.objects.filter(name=name).first()
+
         distributions = models.NpmDistribution.objects.all()
         for distribution in distributions:
-            content = distribution.publication.repository_version.content.filter(
-                pk=package.pk
-            ).first()
+            content = distribution.publication.repository_version.content
+            packages = models.Package.objects.filter(name=name, pk__in=content)
 
-            if content:
+            if packages.count():
+                data["name"] = name
+                data["versions"] = {}
+                versions = []
+
+            for package in packages:
                 origin = settings.CONTENT_ORIGIN
                 prefix = pulp_npm_content_path()
                 tarball_url = "/".join(
@@ -241,13 +245,15 @@ class PublishedPackageViewSet(APIView):
                     )
                 )
 
-                data = {
-                    "name": package.name,
-                    "versions": {
-                        package.version: {
-                            "_id": f"{package.name}@{package.version}",
-                            "dist": {"tarball": tarball_url},
-                        }
-                    },
+                version = {
+                    package.version: {
+                        "_id": f"{package.name}@{package.version}",
+                        "dist": {"tarball": tarball_url},
+                    }
                 }
+                versions.append(package.version)
+                data["versions"].update(version)
+
+        data["dist-tags"] = {"latest": max(versions)}
+
         return Response(data)

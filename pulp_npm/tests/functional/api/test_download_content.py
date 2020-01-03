@@ -19,11 +19,7 @@ from pulp_npm.tests.functional.constants import (
     NPM_REMOTE_PATH,
     NPM_REPO_PATH,
 )
-from pulp_npm.tests.functional.utils import (
-    publish,
-    gen_npm_remote,
-    get_npm_content_paths,
-)
+from pulp_npm.tests.functional.utils import gen_npm_remote, get_npm_content_paths
 from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
@@ -71,13 +67,9 @@ class DownloadContentTestCase(unittest.TestCase):
         sync(cfg, remote, repo)
         repo = client.get(repo["pulp_href"])
 
-        # Create a publication.
-        publication = publish(cfg, repo)
-        self.addCleanup(client.delete, publication["pulp_href"])
-
         # Create a distribution.
         body = gen_distribution()
-        body["publication"] = publication["pulp_href"]
+        body["repository"] = repo["pulp_href"]
         distribution = client.using_handler(api.task_handler).post(
             NPM_DISTRIBUTION_PATH, body
         )

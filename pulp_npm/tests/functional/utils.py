@@ -5,7 +5,6 @@ from unittest import SkipTest
 
 from pulp_smash import api, selectors
 from pulp_smash.pulp3.utils import (
-    gen_publisher,
     gen_remote,
     gen_repo,
     get_content,
@@ -18,7 +17,6 @@ from pulp_npm.tests.functional.constants import (
     NPM_CONTENT_NAME,
     NPM_CONTENT_PATH,
     NPM_FIXTURE_URL,
-    NPM_PUBLICATION_PATH,
     NPM_REMOTE_PATH,
     NPM_REPO_PATH,
 )
@@ -37,15 +35,6 @@ def gen_npm_remote(url=NPM_FIXTURE_URL, **kwargs):
     """
     # FIXME: Add any fields specific to a npm remote here
     return gen_remote(url, **kwargs)
-
-
-def gen_npm_publisher(**kwargs):
-    """Return a semi-random dict for use in creating a npm Publisher.
-
-    :param url: The URL of an external content source.
-    """
-    # FIXME: Add any fields specific to a plugin_teplate publisher here
-    return gen_publisher(**kwargs)
 
 
 def get_npm_content_paths(repo, version_href=None):
@@ -95,27 +84,6 @@ def populate_pulp(cfg, url=NPM_FIXTURE_URL):
         if repo:
             client.delete(repo["pulp_href"])
     return client.get(NPM_CONTENT_PATH)["results"]
-
-
-def publish(cfg, repo, version_href=None):
-    """Publish a repository.
-
-    :param pulp_smash.config.PulpSmashConfig cfg: Information about the Pulp
-        host.
-    :param repo: A dict of information about the repository.
-    :param version_href: A href for the repo version to be published.
-    :returns: A publication. A dict of information about the just created
-        publication.
-    """
-    if version_href:
-        body = {"repository_version": version_href}
-    else:
-        body = {"repository": repo["pulp_href"]}
-
-    client = api.Client(cfg, api.json_handler)
-    call_report = client.post(NPM_PUBLICATION_PATH, body)
-    tasks = tuple(api.poll_spawned_tasks(cfg, call_report))
-    return client.get(tasks[-1]["created_resources"][0])
 
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)  # pylint:disable=invalid-name

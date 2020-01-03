@@ -169,36 +169,6 @@ class NpmRepositoryVersionViewSet(core.RepositoryVersionViewSet):
     parent_viewset = NpmRepositoryViewSet
 
 
-class NpmPublicationViewSet(core.PublicationViewSet):
-    """
-    ViewSet for Npm Publications.
-    """
-
-    endpoint_name = "npm"
-    queryset = models.NpmPublication.objects.all()
-    serializer_class = serializers.NpmPublicationSerializer
-
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to create a new Npm "
-        "content publication.",
-        responses={202: AsyncOperationResponseSerializer},
-    )
-    def create(self, request):
-        """
-        Dispatches a publish task.
-        """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        repository_version = serializer.validated_data.get("repository_version")
-
-        result = enqueue_with_reservation(
-            tasks.publish,
-            [repository_version.repository],
-            kwargs={"repository_version_pk": repository_version.pk},
-        )
-        return core.OperationPostponedResponse(result, request)
-
-
 class NpmDistributionViewSet(core.BaseDistributionViewSet):
     """
     ViewSet for NPM Distributions.
@@ -225,7 +195,10 @@ class PublishedPackageViewSet(APIView):
 
         distributions = models.NpmDistribution.objects.all()
         for distribution in distributions:
-            content = distribution.publication.repository_version.content
+            repository_version = distribution.repository_version
+            if not repository_version:
+                repository_version = distribution.repository.latest_version()
+            content = repository_version.content
             packages = models.Package.objects.filter(name=name, pk__in=content)
 
             if packages.count():

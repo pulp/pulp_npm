@@ -5,7 +5,6 @@ from urllib.parse import urljoin
 from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
-    BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
     BASE_REPO_PATH,
     BASE_CONTENT_PATH,
@@ -26,8 +25,6 @@ NPM_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "npm/packages/")
 NPM_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "npm/npm/")
 
 NPM_REPO_PATH = urljoin(BASE_REPO_PATH, "npm/npm/")
-
-NPM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "npm/npm/")
 
 NPM_FIXTURE_URL = "https://registry.npmjs.org/"
 """The URL to a npm repository."""

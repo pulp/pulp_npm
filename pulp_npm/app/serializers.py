@@ -105,16 +105,6 @@ class NpmRepositorySerializer(platform.RepositorySerializer):
         model = models.NpmRepository
 
 
-class NpmPublicationSerializer(platform.PublicationSerializer):
-    """
-    A Serializer for NpmPublication.
-    """
-
-    class Meta:
-        fields = platform.PublicationSerializer.Meta.fields
-        model = models.NpmPublication
-
-
 class NpmBaseURLField(serializers.CharField):
     """
     Field for the base_url field pointing to the npm content app.
@@ -127,7 +117,7 @@ class NpmBaseURLField(serializers.CharField):
         return "/".join((origin.strip("/"), prefix.strip("/"), base_path.lstrip("/")))
 
 
-class NpmDistributionSerializer(platform.PublicationDistributionSerializer):
+class NpmDistributionSerializer(platform.RepositoryVersionDistributionSerializer):
     """
     Serializer for NPM Distributions.
     """
@@ -141,5 +131,5 @@ class NpmDistributionSerializer(platform.PublicationDistributionSerializer):
     )
 
     class Meta:
-        fields = platform.PublicationDistributionSerializer.Meta.fields
+        fields = platform.RepositoryVersionDistributionSerializer.Meta.fields
         model = models.NpmDistribution

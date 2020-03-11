@@ -6,11 +6,12 @@ black: true
 check_commit_message: true
 cherry_pick_automation: false
 coverage: false
-deploy_client_to_pypi: false
-deploy_client_to_rubygems: false
-deploy_daily_client_to_pypi: false
-deploy_daily_client_to_rubygems: false
-deploy_to_pypi: false
+deploy_client_to_pypi: true
+deploy_client_to_rubygems: true
+deploy_daily_client_to_pypi: true
+deploy_daily_client_to_rubygems: true
+deploy_to_pypi: true
+docker_fixtures: false
 docs_test: false
 plugin_app_label: npm
 plugin_camel: PulpNpm
@@ -29,3 +30,4 @@ stable_branch: null
 test_bindings: false
 test_performance: false
 travis_notifications: null
+

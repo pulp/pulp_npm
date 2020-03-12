@@ -9,7 +9,7 @@ name: Pulp CI
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron: '15 1 * * *'
+    - cron: '0 */2 * * *'
 jobs:
   pulp:
     runs-on: ubuntu-latest

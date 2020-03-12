@@ -90,9 +90,11 @@ jobs:
       - name: "Publish client to rubygems"
         env:
           TEST: bindings
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: bash .github/publish_client_gem.sh
       - name: "Publish client to pypi"
         env:
           TEST: bindings
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: bash .github/publish_client_pypi.sh
 

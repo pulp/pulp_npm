@@ -9,7 +9,7 @@ name: Pulp CI
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron: '0 */2 * * *'
+    - cron: '15 1 * * *'
 jobs:
   pulp:
     runs-on: ubuntu-latest
@@ -109,8 +109,14 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           .github/install.sh
-          echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
           pip install --upgrade pip
+        shell: bash
+      - name: Before Script
+        run: |
+          .github/before_script.sh
+          echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
+      - name: Script
+        run: .github/script.sh
         shell: bash
       - name: "Deploy plugin to pypi"
         if: "contains(github.ref, 'tags')"

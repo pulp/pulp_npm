@@ -19,7 +19,6 @@ jobs:
         env:
           - TEST: pulp
           - TEST: docs
-          - TEST: bindings
     services:
       postgres:
         image: postgres:9.6
@@ -110,6 +109,8 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           .github/install.sh
+          echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
+        shell: bash
       - name: "Deploy plugin to pypi"
         if: "contains(github.ref, 'tags')"
         run: bash .github/publish_plugin_pypi.sh
@@ -121,3 +122,14 @@ jobs:
         env:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: bash .github/publish_client_gem.sh
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+          sudo docker images
+          sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
+          sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
+          sudo kubectl logs -l app=pulp-api --tail=50000
+          sudo kubectl logs -l app=pulp-content --tail=10000
+          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+          sudo kubectl logs -l app=pulp-worker --tail=10000

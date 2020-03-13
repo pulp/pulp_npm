@@ -6,7 +6,7 @@ requirements = ["pulpcore>=3.0.0rc7"]
 
 setup(
     name="pulp-npm",
-    version="0.1.0a1",
+    version="0.1.0a1.dev",
     description="pulp-npm plugin for the Pulp Project",
     license="GPLv2+",
     author="AUTHOR",

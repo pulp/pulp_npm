@@ -78,6 +78,8 @@ jobs:
         image: postgres:9.6
       redis:
         image: redis
+    env:
+      TEST: bindings
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.7
@@ -94,16 +96,28 @@ jobs:
           sudo apt-get update -yq
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
+      - name: Before Install
+        run: |
+          .github/before_install.sh
+          CURRENT_DIR=$PWD
+          cd ..
+          find ./ -type f -exec sed -i -e 's/timeout 90 bash/timeout 120 bash/g' {} \;
+          find ./ -type f -exec sed -i -e 's/\/usr\/local\/bin\/kubectl/$(which kubectl)/g' {} \;
+          find ./ -type f -exec sed -i -e 's/# containers are not running yet./sudo cp -i \/etc\/rancher\/k3s\/k3s.yaml $HOME\/.kube\/config/g' {} \;
+          cd $CURRENT_DIR
+        shell: bash
+      - name: Install
+        run: |
+          mkdir -p $HOME/.kube
+          .github/install.sh
       - name: "Deploy plugin to pypi"
         if: "contains(github.ref, 'tags')"
         run: bash .github/publish_plugin_pypi.sh
       - name: "Publish client to pypi"
         env:
-          TEST: bindings
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: bash .github/publish_client_pypi.sh
       - name: "Publish client to rubygems"
         env:
-          TEST: bindings
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: bash .github/publish_client_gem.sh

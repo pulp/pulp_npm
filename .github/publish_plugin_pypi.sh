@@ -9,7 +9,7 @@
 
 set -euv
 
-pip install twine
+pip install twine setuptools wheel
 
 python setup.py sdist bdist_wheel --python-tag py3
 twine check dist/* || exit 1

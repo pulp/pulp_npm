@@ -9,7 +9,7 @@
 
 set -euv
 
-pip install twine
+pip install twine setuptools wheel
 
 cd "${GITHUB_WORKSPACE}"
 export REPORTED_VERSION=$(http :24817/pulp/api/v3/status/ | jq --arg plugin pulp_npm -r '.versions[] | select(.component == $plugin) | .version')

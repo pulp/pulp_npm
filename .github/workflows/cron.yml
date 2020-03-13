@@ -110,6 +110,7 @@ jobs:
           mkdir -p $HOME/.kube
           .github/install.sh
           echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
+          pip install --upgrade pip
         shell: bash
       - name: "Deploy plugin to pypi"
         if: "contains(github.ref, 'tags')"

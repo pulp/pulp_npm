@@ -9,6 +9,30 @@
 
 set -euv
 
+cd $GITHUB_WORKSPACE/../pulp-openapi-generator
+COMMIT_MSG=$(git log --format=%B --no-merges -1)
+export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
+
+if [ -n "$PULP_BINDINGS_PR_NUMBER" ]; then
+  git fetch origin pull/$PULP_BINDINGS_PR_NUMBER/head:$PULP_BINDINGS_PR_NUMBER
+  git checkout $PULP_BINDINGS_PR_NUMBER
+fi
+
+./generate.sh pulpcore ruby 0
+cd pulpcore-client
+gem build pulpcore_client
+gem install --both ./pulpcore_client-0.gem
+cd ..
+
+./generate.sh pulp_npm ruby 0
+
+cd pulp_npm-client
+gem build pulp_npm_client
+gem install --both ./pulp_npm_client-0.gem
+
+rm -rf ./pulpcore-client
+rm -rf ./pulp_npm-client
+
 echo "---
 :rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
 sudo chmod 600 ~/.gem/credentials
@@ -35,9 +59,7 @@ then
   exit
 fi
 
-cd
-git clone https://github.com/pulp/pulp-openapi-generator.git
-cd pulp-openapi-generator
+cd ../pulp-openapi-generator
 
 ./generate.sh pulp_npm ruby $VERSION
 cd pulp_npm-client

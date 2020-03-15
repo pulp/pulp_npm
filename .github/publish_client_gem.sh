@@ -29,9 +29,10 @@ cd ..
 cd pulp_npm-client
 gem build pulp_npm_client
 gem install --both ./pulp_npm_client-0.gem
+cd ..
 
-rm -rf ./pulpcore-client
-rm -rf ./pulp_npm-client
+sudo rm -rf ./pulpcore-client
+sudo rm -rf ./pulp_npm-client
 
 echo "---
 :rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
@@ -64,5 +65,5 @@ cd ../pulp-openapi-generator
 ./generate.sh pulp_npm ruby $VERSION
 cd pulp_npm-client
 gem build pulp_npm_client
-GEM_FILE="$(ls | grep pulp_npm_client-)"
+GEM_FILE="$(ls | grep pulp_npm_client-${VERSION})"
 gem push ${GEM_FILE}

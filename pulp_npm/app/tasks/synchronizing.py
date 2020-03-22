@@ -73,20 +73,45 @@ class NpmFirstStage(Stage):
         """
         downloader = self.remote.get_downloader(url=self.remote.url)
         result = await downloader.run()
-        # Use ProgressReport to report progress
-        data = self.get_json_data(result.path)
-        package = Package(name=data["name"], version=data["version"])
-        artifact = Artifact()  # make Artifact in memory-only
-        url = data["dist"]["tarball"]
-        da = DeclarativeArtifact(
-            artifact,
-            url,
-            url.split("/")[-1],
-            self.remote,
-            deferred_download=self.deferred_download,
-        )
-        dc = DeclarativeContent(content=package, d_artifacts=[da])
-        await self.put(dc)
+        data = [self.get_json_data(result.path)]
+        dependencies = data[0].get("dependencies")
+        to_download = []
+        if dependencies:
+            to_download.extend(dependencies.items())
+            downloaded = []
+            while to_download:
+                next_batch = []
+                for name, version in to_download:
+                    new_url = self.remote.url.replace(data[0]["name"], name)
+                    new_url = new_url.replace(
+                        data[0]["version"], version.replace("^", "")
+                    )
+                    downloader = self.remote.get_downloader(url=new_url)
+                    result = await downloader.run()
+                    new_data = self.get_json_data(result.path)
+                    data.append(new_data)
+                    next_batch.extend(new_data.get("dependencies", {}).items())
+                    downloaded.append((name, version))
+
+                to_download.extend(next_batch)
+
+                for dependency in downloaded:
+                    if dependency in to_download:
+                        to_download.remove(dependency)
+
+        for pkg in data:
+            package = Package(name=pkg["name"], version=pkg["version"])
+            artifact = Artifact()  # make Artifact in memory-only
+            url = pkg["dist"]["tarball"]
+            da = DeclarativeArtifact(
+                artifact,
+                url,
+                url.split("/")[-1],
+                self.remote,
+                deferred_download=self.deferred_download,
+            )
+            dc = DeclarativeContent(content=package, d_artifacts=[da])
+            await self.put(dc)
 
     def get_json_data(self, path):
         """

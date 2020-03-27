@@ -1,3 +1,5 @@
+![Pulp CI](https://github.com/pulp/pulp_npm/workflows/Pulp%20CI/badge.svg)
+
 # pulp-npm
 
 A Pulp plugin to support hosting your own npm.

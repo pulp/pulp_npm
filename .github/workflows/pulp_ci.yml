@@ -6,17 +6,16 @@
 # For more info visit https://github.com/pulp/plugin_template
 ---
 name: Pulp CI
-on: [push, pull_request]
+on:
+  pull_request:
+    branches:
+      - '*'
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron: '15 1 * * *'
 jobs:
   pulp:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        env:
-          - TEST: pulp
-          - TEST: docs
-          - TEST: bindings
     services:
       postgres:
         image: postgres:9.6
@@ -56,7 +55,7 @@ jobs:
       - name: Before Install
         run: |
           .github/before_install.sh
-          echo "::set-env name=TEST::${{ matrix.env.TEST }}"
+          echo "::set-env name=TEST::pulp"
           CURRENT_DIR=$PWD
           cd ..
           find ./ -type f -exec sed -i -e 's/timeout 90 bash/timeout 120 bash/g' {} \;

@@ -7,9 +7,11 @@
 ---
 name: Pulp CI
 on:
-  schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron: '15 1 * * *'
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*'
 jobs:
   pulp:
     runs-on: ubuntu-latest
@@ -26,6 +28,8 @@ jobs:
         image: redis
     steps:
       - uses: actions/checkout@v2
+      - run: |
+          git fetch --prune --unshallow
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:

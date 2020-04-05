@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.utils import (
-    download_content_unit,
     gen_distribution,
     gen_repo,
     sync,
@@ -82,7 +81,9 @@ class DownloadContentTestCase(unittest.TestCase):
         ).hexdigest()
 
         # …and Pulp.
-        content = download_content_unit(cfg, distribution, unit_path.split("/")[-1])
-        pulp_hash = hashlib.sha256(content).hexdigest()
-
+        pulp_hash = hashlib.sha256(
+            utils.http_get(
+                urljoin(distribution["base_url"] + "/", unit_path.split("/")[-1])
+            )
+        ).hexdigest()
         self.assertEqual(fixtures_hash, pulp_hash)

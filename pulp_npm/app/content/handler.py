@@ -19,6 +19,7 @@ class NpmContentHandler(Handler):
 
         Returns:
             headers (dict): A dictionary of response headers.
+
         """
         content_type, encoding = mimetypes.guess_type(path)
         headers = {}

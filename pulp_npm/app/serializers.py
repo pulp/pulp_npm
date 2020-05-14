@@ -111,6 +111,9 @@ class NpmBaseURLField(serializers.CharField):
     """
 
     def to_representation(self, value):
+        """
+        Field representation.
+        """
         base_path = value
         origin = settings.CONTENT_ORIGIN
         prefix = pulp_npm_content_path()

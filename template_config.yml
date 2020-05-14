@@ -24,10 +24,14 @@ plugin_name: pulp_npm
 plugin_snake: pulp_npm
 pulp_settings: null
 pulpcore_branch: master
+pulpcore_pip_version_specifier: null
 pydocstyle: false
-pypi_username: null
+pypi_username: pulp
+redmine_project: 'npm-plugin'
 stable_branch: null
 test_bindings: false
 test_performance: false
+test_s3: false
+travis_addtl_services: []
 travis_notifications: null
 

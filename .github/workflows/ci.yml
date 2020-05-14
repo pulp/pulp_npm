@@ -16,7 +16,6 @@ jobs:
         env:
           - TEST: pulp
           - TEST: docs
-          - TEST: bindings
     services:
       postgres:
         image: postgres:9.6
@@ -57,17 +56,14 @@ jobs:
         run: |
           .github/before_install.sh
           echo "::set-env name=TEST::${{ matrix.env.TEST }}"
-          CURRENT_DIR=$PWD
-          cd ..
-          find ./ -type f -exec sed -i -e 's/timeout 90 bash/timeout 120 bash/g' {} \;
-          find ./ -type f -exec sed -i -e 's/\/usr\/local\/bin\/kubectl/$(which kubectl)/g' {} \;
-          find ./ -type f -exec sed -i -e 's/# containers are not running yet./sudo cp -i \/etc\/rancher\/k3s\/k3s.yaml $HOME\/.kube\/config/g' {} \;
-          cd $CURRENT_DIR
         shell: bash
       - name: Install
         run: |
-          mkdir -p $HOME/.kube
           .github/install.sh
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        shell: bash
       - name: Before Script
         run: |
           .github/before_script.sh
@@ -78,11 +74,9 @@ jobs:
       - name: After failure
         if: failure()
         run: |
-          http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
-          sudo docker images
-          sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
-          sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
-          sudo kubectl logs -l app=pulp-api --tail=50000
-          sudo kubectl logs -l app=pulp-content --tail=10000
-          sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-          sudo kubectl logs -l app=pulp-worker --tail=10000
+          http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/
+          docker images
+          docker ps -a
+          docker logs pulp
+          docker exec pulp ls -latr /etc/yum.repos.d/
+          docker exec pulp cat /etc/yum.repos.d/*

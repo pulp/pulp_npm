@@ -16,6 +16,7 @@ jobs:
         env:
           - TEST: pulp
           - TEST: docs
+          - TEST: s3
     services:
       postgres:
         image: postgres:9.6

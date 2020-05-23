@@ -5,8 +5,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp CI
-on: [push, pull_request]
+name: Pulp PR
+on: pull_request
 jobs:
   pulp:
     runs-on: ubuntu-latest

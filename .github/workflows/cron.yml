@@ -110,6 +110,8 @@ jobs:
           ANSIBLE_FORCE_COLOR: '1'
         shell: bash
       - name: "Deploy plugin to pypi"
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         if: "contains(github.ref, 'tags')"
         run: bash .github/publish_plugin_pypi.sh
       - name: "Publish client to pypi"

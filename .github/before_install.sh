@@ -9,6 +9,9 @@
 
 set -mveuo pipefail
 
+mkdir .github/vars || true
+echo "---" > .github/vars/main.yaml
+
 export PRE_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/pre_before_install.sh
 export POST_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/post_before_install.sh
 
@@ -29,10 +32,12 @@ then
   export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_OPENAPI_GENERATOR_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
+  echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .github/vars/main.yaml
 else
   export PULPCORE_PR_NUMBER=
   export PULP_SMASH_PR_NUMBER=
   export PULP_OPENAPI_GENERATOR_PR_NUMBER=
+  export CI_BASE_IMAGE=
 fi
 
 # dev_requirements contains tools needed for flake8, etc.

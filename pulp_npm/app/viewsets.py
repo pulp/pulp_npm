@@ -7,7 +7,7 @@ Check `Plugin Writer's Guide`_ for more details.
 from django.conf import settings
 
 from django.db import transaction
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -136,9 +136,9 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
 
     # This decorator is necessary since a sync operation is asyncrounous and returns
     # the id and href of the sync task.
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to sync content.",
-        operation_summary="Sync from remote",
+    @extend_schema(
+        description="Trigger an asynchronous task to sync content.",
+        summary="Sync from remote",
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)

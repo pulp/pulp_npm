@@ -27,24 +27,26 @@ cd .github
 # that are invalid in image tag names. To try to convert them, this would be a
 # starting point:
 # https://stackoverflow.com/a/50687120
-#
-# If we are on a tag
-if [ -n "${GITHUB_REF##*/}" ]; then
-  TAG=$(echo ${GITHUB_REF##*/} | tr / _)
-# If we are on a PR
-elif [ -n "${GITHUB_REF##*/}" ]; then
-  TAG=$(echo ${GITHUB_REF##*/} | tr / _)
-# For push builds and hopefully cron builds
-elif [ -n "${GITHUB_REF##*/}" ]; then
-  TAG=$(echo ${GITHUB_REF##*/} | tr / _)
+
+IS_TAG=
+# For push builds and hopefully cron builds (branch build)
+if [ "${GITHUB_REF:0:11}" == "refs/heads/" ]; then
+  TAG=$(echo ${GITHUB_REF#refs/heads/} | tr / _)
   if [ "${TAG}" = "master" ]; then
     TAG=latest
   fi
+# If we are on a PR
+elif [ "${GITHUB_REF:0:10}" == "refs/pull/" ]; then
+  TAG=$(echo ${GITHUB_REF#refs/pull/} | tr / _)
+# If we are on a tag
+elif [ -n "${GITHUB_REF}" ]; then
+  TAG=$(echo ${GITHUB_REF} | tr / _)
+  IS_TAG=1
 else
   # Fallback
   TAG=$(git rev-parse --abbrev-ref HEAD | tr / _)
 fi
-if [ -n "${GITHUB_REF##*/}" ]; then
+if [ -n "${IS_TAG}" ]; then
   # Install the plugin only and use published PyPI packages for the rest
   # Quoting ${TAG} ensures Ansible casts the tag as a string.
   cat >> vars/main.yaml << VARSYAML

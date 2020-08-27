@@ -1,4 +1,5 @@
 coverage
+black==19.10b0
 flake8
 
 flake8-black

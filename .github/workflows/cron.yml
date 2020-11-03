@@ -36,31 +36,10 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.7'
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-      - name: Before Install
-        run: |
-          .github/before_install.sh
-          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
-        shell: bash
-      - name: Install
-        run: |
-          .github/install.sh
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-        shell: bash
-      - name: Before Script
-        run: |
-          .github/before_script.sh
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.github" >> $GITHUB_ENV
-      - name: Script
-        run: .github/script.sh
-        shell: bash
+      - name: Pulp Action
+        uses: fao89/pulp_action@v0.1
+        with:
+          test-type: ${{ matrix.env.TEST }}
       - name: After failure
         if: failure()
         run: |
@@ -90,25 +69,10 @@ jobs:
         uses: actions/setup-ruby@v1
         with:
           ruby-version: '2.6'
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-      - name: Before Install
-        run: |
-          .github/before_install.sh
-        shell: bash
-      - name: Install
-        run: |
-          .github/install.sh
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.github" >> $GITHUB_ENV
-          pip install --upgrade pip
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-        shell: bash
+      - name: Pulp Action
+        uses: fao89/pulp_action@v0.1
+        with:
+          test-type: ${{ matrix.env.TEST }}
       - name: "Deploy plugin to pypi"
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

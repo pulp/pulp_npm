@@ -56,7 +56,7 @@ jobs:
       - name: Before Install
         run: |
           .github/before_install.sh
-          echo "::set-env name=TEST::${{ matrix.env.TEST }}"
+          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
         shell: bash
       - name: Install
         run: |
@@ -68,7 +68,7 @@ jobs:
       - name: Before Script
         run: |
           .github/before_script.sh
-          echo "::set-env name=HTTPIE_CONFIG_DIR::$GITHUB_WORKSPACE/.github"
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.github" >> $GITHUB_ENV
       - name: Script
         run: .github/script.sh
         shell: bash

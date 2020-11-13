@@ -4,6 +4,7 @@
 additional_plugins: []
 black: true
 check_commit_message: true
+check_manifest: true
 cherry_pick_automation: false
 coverage: false
 deploy_client_to_pypi: true
@@ -22,16 +23,20 @@ plugin_dash: pulp-npm
 plugin_dash_short: npm
 plugin_name: pulp_npm
 plugin_snake: pulp_npm
+publish_docs_to_pulpprojectdotorg: false
 pulp_settings: null
 pulpcore_branch: master
 pulpcore_pip_version_specifier: null
+pulpprojectdotorg_key_id: null
 pydocstyle: false
 pypi_username: pulp
-redmine_project: 'npm-plugin'
+redmine_project: npm-plugin
 stable_branch: null
 test_bindings: false
 test_performance: false
+test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
 travis_addtl_services: []
 travis_notifications: null
+update_redmine: true
 

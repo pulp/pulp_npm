@@ -18,35 +18,13 @@ pip install -r functest_requirements.txt
 
 cd .github
 
-# Although the tag name is not used outside of this script, we might use it
-# later. And it is nice to have a friendly identifier for it.
-# So we use the branch preferably, but need to replace the "/" with the valid
-# character "_" .
-#
-# Note that there are lots of other valid git branch name special characters
-# that are invalid in image tag names. To try to convert them, this would be a
-# starting point:
-# https://stackoverflow.com/a/50687120
-
-IS_TAG=
-# For push builds and hopefully cron builds (branch build)
-if [ "${GITHUB_REF:0:11}" == "refs/heads/" ]; then
-  TAG=$(echo ${GITHUB_REF#refs/heads/} | tr / _)
-  if [ "${TAG}" = "master" ]; then
-    TAG=latest
-  fi
-# If we are on a PR
-elif [ "${GITHUB_REF:0:10}" == "refs/pull/" ]; then
-  TAG=$(echo ${GITHUB_REF#refs/pull/} | tr / _)
-# If we are on a tag
-elif [ -n "${GITHUB_REF}" ]; then
-  TAG=$(echo ${GITHUB_REF} | tr / _)
-  IS_TAG=1
+TAG=ci_build
+if [[ "$TEST" == "plugin-from-pypi" ]]; then
+  PLUGIN_NAME=pulp_npm
 else
-  # Fallback
-  TAG=$(git rev-parse --abbrev-ref HEAD | tr / _)
+  PLUGIN_NAME=./pulp_npm
 fi
-if [ -n "${IS_TAG}" ]; then
+if [ -n "${GITHUB_REF##*/}" ]; then
   # Install the plugin only and use published PyPI packages for the rest
   # Quoting ${TAG} ensures Ansible casts the tag as a string.
   cat >> vars/main.yaml << VARSYAML
@@ -57,7 +35,7 @@ plugins:
   - name: pulpcore
     source: pulpcore
   - name: pulp_npm
-    source: ./pulp_npm
+    source:  "${PLUGIN_NAME}"
 services:
   - name: pulp
     image: "pulp:${TAG}"
@@ -70,10 +48,10 @@ image:
   name: pulp
   tag: "${TAG}"
 plugins:
+  - name: pulp_npm
+    source: "${PLUGIN_NAME}"
   - name: pulpcore
     source: ./pulpcore
-  - name: pulp_npm
-    source: ./pulp_npm
 services:
   - name: pulp
     image: "pulp:${TAG}"

@@ -26,6 +26,8 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
     redmine = Redmine("https://pulp.plan.io")
     project_set = set()
     stats = defaultdict(list)
+    milestone_url = "\n[noissue]"
+    milestone_id = None
     for issue in redmine_issues:
         redmine_issue = redmine.issue.get(int(issue))
 
@@ -44,6 +46,11 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
         except ResourceAttrError:
             stats["without_milestone"].append(issue)
 
+    if milestone_id is not None:
+        milestone_url = (
+            f"Redmine Milestone: {REDMINE_URL}/versions/{milestone_id}.json\n[noissue]"
+        )
+
     print(f"\n\nRedmine stats: {json.dumps(stats, indent=2)}")
     error_messages = []
     if stats.get("status_not_modified"):
@@ -60,7 +67,7 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
         error_messages.append(f"Verify at {redmine_query_url}")
         raise RuntimeError("\n".join(error_messages))
 
-    return f"{REDMINE_URL}/versions/{milestone_id}.json"
+    return milestone_url
 
 
 release_path = os.path.dirname(os.path.abspath(__file__))
@@ -115,11 +122,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--lower", type=str, required=False, help="Lower bound of pulpcore requirement.",
+    "--lower", type=str, required=False, help="Lower bound of pulpcore requirement."
 )
 
 parser.add_argument(
-    "--upper", type=str, required=False, help="Upper bound of pulpcore requirement.",
+    "--upper", type=str, required=False, help="Upper bound of pulpcore requirement."
 )
 
 args = parser.parse_args()
@@ -162,8 +169,7 @@ git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
 git.commit(
     "-m",
-    f"Releasing {release_version}\n\nRedmineQuery: {redmine_final_query}\n"
-    f"RedmineMilestone: {milestone_url}\n[noissue]",
+    f"Release {release_version}\n\nRedmine Query: {redmine_final_query}\n{milestone_url}",
 )
 
 sha = repo.head.object.hexsha
@@ -172,7 +178,11 @@ short_sha = git.rev_parse(sha, short=7)
 # Third commit: bump to .dev
 with open(f"{plugin_path}/requirements.txt", "wt") as setup_file:
     for line in setup_lines:
-        if "pulpcore" in line and "pulpcore" not in release_path:
+        if (
+            "pulpcore" in line
+            and "pulpcore" not in release_path
+            and release_type != "patch"
+        ):
             line = f"pulpcore>={lower_pulpcore_version}\n"
 
         setup_file.write(line)

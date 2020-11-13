@@ -9,8 +9,15 @@
 
 set -mveuo pipefail
 
+if [[ "$TEST" == "plugin-from-pypi" ]]; then
+  COMPONENT_VERSION=$(http https://pypi.org/pypi/pulp-npm/json | jq -r '.info.version')
+else
+  COMPONENT_VERSION=$(sed -ne 's/\s*version=\"\(.*\)\"[\s,]*/\1/p' setup.py)
+fi
 mkdir .github/vars || true
 echo "---" > .github/vars/main.yaml
+echo "component_name: pulp_npm" >> .github/vars/main.yaml
+echo "component_version: '${COMPONENT_VERSION}'" >> .github/vars/main.yaml
 
 export PRE_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/pre_before_install.sh
 export POST_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/post_before_install.sh
@@ -44,11 +51,18 @@ fi
 # So install them here rather than in install.sh
 pip install -r dev_requirements.txt
 
+# check the commit message
+./.github/check_commit.sh
+
 # run black separately from flake8 to get a diff
+black --version
 black --check --diff .
 
 # Lint code.
 flake8 --config flake8.cfg
+
+# check for any files unintentionally left out of MANIFEST.in
+check-manifest
 
 # check for imports from pulpcore that aren't pulpcore.plugin
 ./.github/check_pulpcore_imports.sh
@@ -99,13 +113,9 @@ fi
 
 
 # Intall requirements for ansible playbooks
-pip install docker netaddr boto3
+pip install docker netaddr boto3 ansible
 
-# Install ansible with the boto3 tags to dict fix
-# There is a PR for this issue:
-# https://github.com/ansible-collections/amazon.aws/pull/37
-# Be aware, that the code will have moved to that collection with upcoming releases of ansible
-pip install git+https://github.com/mdellweg/ansible.git@fix_boto3_tags_dict
+ansible-galaxy collection install amazon.aws
 
 cd pulp_npm
 

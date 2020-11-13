@@ -69,9 +69,7 @@ class DownloadContentTestCase(unittest.TestCase):
         # Create a distribution.
         body = gen_distribution()
         body["repository"] = repo["pulp_href"]
-        distribution = client.using_handler(api.task_handler).post(
-            NPM_DISTRIBUTION_PATH, body
-        )
+        distribution = client.using_handler(api.task_handler).post(NPM_DISTRIBUTION_PATH, body)
         self.addCleanup(client.delete, distribution["pulp_href"])
 
         # Pick a content unit, and download it from both Pulp Fixtures…
@@ -82,8 +80,6 @@ class DownloadContentTestCase(unittest.TestCase):
 
         # …and Pulp.
         pulp_hash = hashlib.sha256(
-            utils.http_get(
-                urljoin(distribution["base_url"] + "/", unit_path.split("/")[-1])
-            )
+            utils.http_get(urljoin(distribution["base_url"] + "/", unit_path.split("/")[-1]))
         ).hexdigest()
         self.assertEqual(fixtures_hash, pulp_hash)

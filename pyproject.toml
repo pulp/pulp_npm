@@ -19,4 +19,21 @@ ignore = [
     "template_config.yml",
     ".github/**",
     ".pep8speaks.yml",
+    ".scripts/**"
 ]
+
+[tool.black]
+line-length = 100
+target-version = ["py36", "py37", "py38"]
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.venv
+  | _build
+  | build
+  | dist
+  | migrations
+  | docs
+)/
+'''

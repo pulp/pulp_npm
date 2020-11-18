@@ -2,7 +2,8 @@
 
 from setuptools import find_packages, setup
 
-requirements = ["pulpcore>=3.0.0rc7"]
+with open("requirements.txt") as requirements:
+    requirements = requirements.readlines()
 
 setup(
     name="pulp-npm",

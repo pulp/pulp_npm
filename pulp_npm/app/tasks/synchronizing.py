@@ -83,9 +83,7 @@ class NpmFirstStage(Stage):
                 next_batch = []
                 for name, version in to_download:
                     new_url = self.remote.url.replace(data[0]["name"], name)
-                    new_url = new_url.replace(
-                        data[0]["version"], version.replace("^", "")
-                    )
+                    new_url = new_url.replace(data[0]["version"], version.replace("^", ""))
                     downloader = self.remote.get_downloader(url=new_url)
                     result = await downloader.run()
                     new_data = self.get_json_data(result.path)

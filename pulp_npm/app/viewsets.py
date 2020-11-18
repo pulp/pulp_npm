@@ -104,9 +104,7 @@ class PackageViewSet(core.SingleArtifactContentUploadViewSet):
         # ========================================
 
         headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class NpmRemoteViewSet(core.RemoteViewSet):
@@ -147,9 +145,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
         Dispatches a sync task.
         """
         repository = self.get_object()
-        serializer = RepositorySyncURLSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         remote = serializer.validated_data.get("remote")
 

@@ -128,9 +128,7 @@ class NpmDistributionSerializer(platform.RepositoryVersionDistributionSerializer
     base_url = NpmBaseURLField(
         source="base_path",
         read_only=True,
-        help_text=_(
-            "The URL for accessing the universe API as defined by this distribution."
-        ),
+        help_text=_("The URL for accessing the universe API as defined by this distribution."),
     )
 
     class Meta:

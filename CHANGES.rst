@@ -22,7 +22,3 @@ Features
 - Download a package with its dependencies
   `#6004 <https://pulp.plan.io/issues/6004>`_
 
-
-----
-
-

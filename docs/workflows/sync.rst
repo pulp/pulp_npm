@@ -29,8 +29,7 @@ Creating a remote object informs Pulp about an external content source.
 .. code:: json
 
     {
-        "pulp_href": "http://localhost:24817/pulp/pulp/api/v3/remotes/npm/npm/ 9c757d65-3007-4884-ac5b-c2fd93873289/",
-        ...
+        "pulp_href": "http://localhost:24817/pulp/pulp/api/v3/remotes/npm/npm/ 9c757d65-3007-4884-ac5b-c2fd93873289/"
     }
 
 

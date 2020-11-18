@@ -12,12 +12,12 @@ set -mveuo pipefail
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulp-npm/json | jq -r '.info.version')
 else
-  COMPONENT_VERSION=$(sed -ne 's/\s*version=\"\(.*\)\"[\s,]*/\1/p' setup.py)
+  COMPONENT_VERSION=$(sed -ne "s/\s*version=['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
 fi
-mkdir .github/workflows/ansible/vars || true
-echo "---" > .github/workflows/ansible/vars/main.yaml
-echo "component_name: pulp_npm" >> .github/workflows/ansible/vars/main.yaml
-echo "component_version: '${COMPONENT_VERSION}'" >> .github/workflows/ansible/vars/main.yaml
+mkdir .ci/ansible/vars || true
+echo "---" > .ci/ansible/vars/main.yaml
+echo "component_name: pulp_npm" >> .ci/ansible/vars/main.yaml
+echo "component_version: '${COMPONENT_VERSION}'" >> .ci/ansible/vars/main.yaml
 
 export PRE_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/workflows/scripts/pre_before_install.sh
 export POST_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/workflows/scripts/post_before_install.sh
@@ -39,7 +39,7 @@ then
   export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_OPENAPI_GENERATOR_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
-  echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .github/workflows/ansible/vars/main.yaml
+  echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
 else
   export PULPCORE_PR_NUMBER=
   export PULP_SMASH_PR_NUMBER=

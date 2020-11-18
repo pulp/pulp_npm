@@ -65,17 +65,17 @@ jobs:
       - name: Deploy plugin to pypi
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: bash .scripts/publish_plugin_pypi.sh
+        run: bash .ci/scripts/publish_plugin_pypi.sh
       - name: Publish client to rubygems
         env:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: bash .scripts/publish_client_gem.sh
+        run: bash .ci/scripts/publish_client_gem.sh
       - name: Publish client to pypi
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: bash .scripts/publish_client_pypi.sh
+        run: bash .ci/scripts/publish_client_pypi.sh
       - name: Update Redmine
-        script: bash .scripts/update_redmine.sh
+        script: bash .ci/scripts/update_redmine.sh
 
       - name: After failure
         if: failure()

@@ -16,7 +16,7 @@ fi
 
 pip install -r functest_requirements.txt
 
-cd .github/workflows/ansible/
+cd .ci/ansible/
 
 TAG=ci_build
 if [[ "$TEST" == "plugin-from-pypi" ]]; then

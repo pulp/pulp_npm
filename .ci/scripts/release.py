@@ -99,7 +99,7 @@ helper = textwrap.dedent(
                 requirements = ["pulpcore>=3.4"]
 
 
-            $ python .scripts/realease.py minor 4.0 4.1
+            $ python .ci/scripts/release.py minor 4.0 4.1
 
             setup.py on plugin after script:
                 version="2.1.dev"

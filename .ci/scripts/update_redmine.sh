@@ -27,4 +27,4 @@ if [[ "$MILESTONE" != "${RELEASE%.post*}" ]]; then
 fi
 
 pip install python-redmine
-python3 .scripts/redmine.py $REDMINE_QUERY_URL
+python3 .ci/scripts/redmine.py $REDMINE_QUERY_URL

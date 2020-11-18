@@ -15,7 +15,7 @@ echo ::endgroup::
 
 for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
 do
-  python3 .scripts/validate_commit_message.py $sha
+  python3 .ci/scripts/validate_commit_message.py $sha
   VALUE=$?
   if [ "$VALUE" -gt 0 ]; then
     exit $VALUE

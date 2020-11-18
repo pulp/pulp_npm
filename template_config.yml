@@ -23,7 +23,7 @@ plugin_dash: pulp-npm
 plugin_dash_short: npm
 plugin_name: pulp_npm
 plugin_snake: pulp_npm
-publish_docs_to_pulpprojectdotorg: false
+publish_docs_to_pulpprojectdotorg: true
 pulp_settings: null
 pulpcore_branch: master
 pulpcore_pip_version_specifier: null

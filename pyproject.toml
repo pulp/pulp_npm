@@ -1,5 +1,5 @@
 [tool.towncrier]
-package = "pulp-npm"
+package = "pulp_npm"
 filename = "CHANGES.rst"
 directory = "CHANGES/"
 title_format = "{version} ({project_date})"

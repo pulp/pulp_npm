@@ -13,3 +13,16 @@ Changelog
 
 .. towncrier release notes start
 
+0.1.0a1 (2020-11-18)
+====================
+
+Features
+--------
+
+- Download a package with its dependencies
+  `#6004 <https://pulp.plan.io/issues/6004>`_
+
+
+----
+
+

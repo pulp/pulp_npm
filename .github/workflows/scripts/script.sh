@@ -26,7 +26,7 @@ export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
-if [ "$TEST" = "docs" ]; then
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   cd docs
   make PULP_URL="http://pulp" html
   cd ..
@@ -50,7 +50,7 @@ pip install ./pulpcore-client
 pip install ./pulp_npm-client
 cd $REPO_ROOT
 
-if [ "$TEST" = 'bindings' ]; then
+if [[ "$TEST" = 'bindings' || "$TEST" = 'publish' ]]; then
   python $REPO_ROOT/.github/workflows/scripts/test_bindings.py
   cd ../pulp-openapi-generator
   if [ ! -f $REPO_ROOT/.github/workflows/scripts/test_bindings.rb ]

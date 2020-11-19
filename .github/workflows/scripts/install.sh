@@ -20,7 +20,7 @@ else
   TAG_BUILD=1
 fi
 
-if [ "$TEST" = "docs" ]; then
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install -r ../pulpcore/doc_requirements.txt
   pip install -r doc_requirements.txt
 fi

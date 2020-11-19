@@ -75,7 +75,7 @@ jobs:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: bash .ci/scripts/publish_client_pypi.sh
       - name: Update Redmine
-        script: bash .ci/scripts/update_redmine.sh
+        run: bash .ci/scripts/update_redmine.sh
 
       - name: After failure
         if: failure()

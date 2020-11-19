@@ -74,6 +74,10 @@ jobs:
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: bash .ci/scripts/publish_client_pypi.sh
+      - name: Publish Docs
+        env:
+          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
+        run: .github/workflows/scripts/publish_docs.sh
       - name: Update Redmine
         script: bash .ci/scripts/update_redmine.sh
 

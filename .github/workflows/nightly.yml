@@ -66,13 +66,13 @@ jobs:
 
       
       - name: Publish nightly client to rubygems
-        run: .scripts/publish_client_gem.sh
+        run: .ci/scripts/publish_client_gem.sh
         shell: bash
       
 
       
       - name: Publish nightly client to pypi
-        run: .scripts/publish_client_pypi.sh
+        run: .ci/scripts/publish_client_pypi.sh
         shell: bash
       
 

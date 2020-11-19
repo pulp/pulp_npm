@@ -20,11 +20,11 @@ fi
 
 # Developers should be able to reproduce the containers with this config
 echo "CI vars:"
-tail -v -n +1 .github/workflows/ansible/vars/main.yaml
+tail -v -n +1 .ci/ansible/vars/main.yaml
 
 # Developers often want to know the final pulp config
 echo "PULP CONFIG:"
-tail -v -n +1 .github/workflows/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
+tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 
 if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 's3' || "$TEST" == "plugin-from-pypi" ]]; then
   # Many functional tests require these

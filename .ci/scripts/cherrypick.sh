@@ -9,4 +9,4 @@ pip install PyGithub GitPython yq
 
 export STABLE_BRANCH=$(yq -r ".stable_branch" template_config.yml)
 
-python3 .scripts/cherrypick.py
+python3 .ci/scripts/cherrypick.py

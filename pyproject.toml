@@ -19,7 +19,7 @@ ignore = [
     "template_config.yml",
     ".github/**",
     ".pep8speaks.yml",
-    ".scripts/**"
+    ".ci/**"
 ]
 
 [tool.black]

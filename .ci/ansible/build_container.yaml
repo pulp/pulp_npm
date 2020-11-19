@@ -19,7 +19,7 @@
       # 1-off-builds and CI purposes (which has no cache across CI runs.)
       # Run build.yaml with -e cache=false if your builds are using outdated
       # layers.
-      command: "docker build --network host --no-cache={{ not cache | default(true) | bool }} -t {{ image.name }}:{{ image.tag }} -f {{ playbook_dir }}/Containerfile ../../../.."
+      command: "docker build --network host --no-cache={{ not cache | default(true) | bool }} -t {{ image.name }}:{{ image.tag }} -f {{ playbook_dir }}/Containerfile ../../.."
 
     - name: "Clean image cache"
       docker_prune:

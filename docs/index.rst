@@ -20,6 +20,7 @@ Table of Contents
 
    installation
    workflows/index
+   restapi
    changes
    contributing
 

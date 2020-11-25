@@ -125,7 +125,7 @@ jobs:
 
       
       - name: Publish nightly docs
-        run: .scripts/publish_docs.sh nightly
+        run: .github/workflows/scripts/publish_docs.sh nightly
         shell: bash
       
       - name: After failure

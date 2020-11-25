@@ -1,1 +1,1 @@
-pulpcore>=3.7,<3.10
+pulpcore>=3.0.0

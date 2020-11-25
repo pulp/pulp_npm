@@ -12,6 +12,8 @@ set -euv
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../..
 
+mkdir ~/.gem
+touch ~/.gem/credentials
 echo "---
 :rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
 sudo chmod 600 ~/.gem/credentials

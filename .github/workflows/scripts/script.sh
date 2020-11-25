@@ -8,19 +8,23 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# make sure this script runs at the repo root
+cd "$(dirname "$(realpath -e "$0")")"/../../..
+REPO_ROOT="$PWD"
+
 set -mveuo pipefail
 
 source .github/workflows/scripts/utils.sh
 
-export POST_SCRIPT=$GITHUB_WORKSPACE/.github/workflows/scripts/post_script.sh
-export POST_DOCS_TEST=$GITHUB_WORKSPACE/.github/workflows/scripts/post_docs_test.sh
-export FUNC_TEST_SCRIPT=$GITHUB_WORKSPACE/.github/workflows/scripts/func_test_script.sh
+export POST_SCRIPT=$PWD/.github/workflows/scripts/post_script.sh
+export POST_DOCS_TEST=$PWD/.github/workflows/scripts/post_docs_test.sh
+export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
 
 # Needed for both starting the service and building the docs.
 # Gets set in .github/settings.yml, but doesn't seem to inherited by
 # this script.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
-export PULP_SETTINGS=$GITHUB_WORKSPACE/.ci/ansible/settings/settings.py
+export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
 if [ "$TEST" = "docs" ]; then
   cd docs
@@ -44,12 +48,12 @@ cd ../pulp-openapi-generator
 pip install ./pulpcore-client
 ./generate.sh pulp_npm python
 pip install ./pulp_npm-client
-cd $GITHUB_WORKSPACE
+cd $REPO_ROOT
 
 if [ "$TEST" = 'bindings' ]; then
-  python $GITHUB_WORKSPACE/.github/workflows/scripts/test_bindings.py
+  python $REPO_ROOT/.github/workflows/scripts/test_bindings.py
   cd ../pulp-openapi-generator
-  if [ ! -f $GITHUB_WORKSPACE/.github/workflows/scripts/test_bindings.rb ]
+  if [ ! -f $REPO_ROOT/.github/workflows/scripts/test_bindings.rb ]
   then
     exit
   fi
@@ -69,7 +73,7 @@ if [ "$TEST" = 'bindings' ]; then
   gem build pulp_npm_client
   gem install --both ./pulp_npm_client-0.gem
   cd ..
-  ruby $GITHUB_WORKSPACE/.github/workflows/test_bindings.rb
+  ruby $REPO_ROOT/.github/workflows/test_bindings.rb
   exit
 fi
 
@@ -84,7 +88,7 @@ cmd_prefix bash -c "django-admin makemigrations --check --dry-run"
 cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python3.7/site-packages/pulp_npm/tests/unit/"
 
 # Run functional tests
-export PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/../pulpcore${PYTHONPATH:+:${PYTHONPATH}}
+export PYTHONPATH=$REPO_ROOT:$REPO_ROOT/../pulpcore${PYTHONPATH:+:${PYTHONPATH}}
 
 if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT

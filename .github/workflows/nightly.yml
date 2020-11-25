@@ -16,12 +16,6 @@ jobs:
   pulp:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:9.6
-      redis:
-        image: redis
-
     steps:
       - uses: actions/checkout@v2
         with:
@@ -58,7 +52,6 @@ jobs:
       - name: Before Script
         run: |
           .github/workflows/scripts/before_script.sh
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.github/workflows/" >> $GITHUB_ENV
 
       - name: Script
         run: .github/workflows/scripts/script.sh

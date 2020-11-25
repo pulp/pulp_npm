@@ -68,6 +68,7 @@ jobs:
 
     env:
       TEST: publish
+      RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
 
     steps:
       - uses: actions/checkout@v2
@@ -111,13 +112,15 @@ jobs:
       - name: Publish nightly client to rubygems
         run: .ci/scripts/publish_client_gem.sh
         shell: bash
-      
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
 
       
       - name: Publish nightly client to pypi
         run: .ci/scripts/publish_client_pypi.sh
         shell: bash
-      
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
 
       
       - name: Publish nightly docs

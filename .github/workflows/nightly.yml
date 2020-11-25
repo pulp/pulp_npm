@@ -41,6 +41,7 @@ jobs:
           sudo apt-get update -yq
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
+          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
         run: .github/workflows/scripts/before_install.sh

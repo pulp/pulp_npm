@@ -91,6 +91,12 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
 
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install wheel
+          echo ::endgroup::
+
       - name: Before Install
         run: .github/workflows/scripts/before_install.sh
         shell: bash

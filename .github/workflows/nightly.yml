@@ -105,7 +105,7 @@ jobs:
       - name: Before Script
         run: |
           .github/workflows/scripts/before_script.sh
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.github/workflows/" >> $GITHUB_ENV
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
 
       
       - name: Publish nightly client to rubygems
@@ -128,7 +128,6 @@ jobs:
         run: .scripts/publish_docs.sh nightly
         shell: bash
       
-
       - name: After failure
         if: failure()
         run: |

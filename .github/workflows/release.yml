@@ -76,6 +76,9 @@ jobs:
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
+      - name: GitHub Environment Variables Action
+        uses: FranzDiebold/github-env-vars-action@v1.2.1
+
       - uses: actions/setup-python@v2
         with:
           python-version: "3.7"

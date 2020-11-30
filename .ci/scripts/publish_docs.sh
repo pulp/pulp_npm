@@ -24,8 +24,10 @@ pip3 install -r doc_requirements.txt
 export PYTHONUNBUFFERED=1
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
+export WORKSPACE=$PWD
 
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
+
 
 python3 .ci/scripts/docs-builder.py --build-type $1 --branch $2

@@ -5,7 +5,7 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp Release CD
+name: Pulp Release CI/CD
 on:
   push:
     tags:
@@ -76,9 +76,6 @@ jobs:
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - name: GitHub Environment Variables Action
-        uses: FranzDiebold/github-env-vars-action@v1.2.1
-
       - uses: actions/setup-python@v2
         with:
           python-version: "3.7"
@@ -130,8 +127,9 @@ jobs:
         run: bash .ci/scripts/publish_client_pypi.sh
       - name: Publish docs to pulpproject.org
         env:
+          BRANCH: ${GITHUB_REF#refs/{heads,tags}/}
           PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
-        run: .ci/scripts/publish_docs.sh
+        run: .ci/scripts/publish_docs.sh tag $BRANCH
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
 

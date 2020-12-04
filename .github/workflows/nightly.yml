@@ -86,8 +86,9 @@ jobs:
           ruby-version: "2.6"
 
       - name: Setting secrets
-        run: |
-          jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' <<< ${{ toJson(secrets) }} >> $GITHUB_ENV
+        run: echo $SECRETS_JSON | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' >> $GITHUB_ENV
+        env:
+          SECRETS_JSON: ${{ toJson(secrets) }}
 
       - name: Install httpie
         run: |

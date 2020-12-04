@@ -86,7 +86,7 @@ jobs:
           ruby-version: "2.6"
 
       - name: Setting secrets
-        run: jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' <<< "$SECRETS_CONTEXT" >> $GITHUB_ENV
+        run: bash .ci/scripts/secrets.sh "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 

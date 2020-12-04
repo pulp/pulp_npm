@@ -29,5 +29,4 @@ export WORKSPACE=$PWD
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
 
-
 python3 .ci/scripts/docs-builder.py --build-type $1 --branch $2

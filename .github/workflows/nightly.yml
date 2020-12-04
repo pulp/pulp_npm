@@ -86,9 +86,7 @@ jobs:
           ruby-version: "2.6"
 
       - name: Setting secrets
-        run: bash .ci/scripts/secrets.sh "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        run: bash .ci/scripts/secrets.sh "${{ toJson(secrets) }}"
 
       - name: Install httpie
         run: |

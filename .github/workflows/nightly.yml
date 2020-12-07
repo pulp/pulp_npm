@@ -86,7 +86,7 @@ jobs:
           ruby-version: "2.6"
 
       - name: Setting secrets
-        run: python3 .ci/scripts/secrets.py "$SECRETS_CONTEXT" $GITHUB_ENV
+        run: python3 .ci/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 

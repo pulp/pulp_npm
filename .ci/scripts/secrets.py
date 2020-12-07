@@ -1,15 +1,14 @@
 import json
+import os
 import sys
 
 secrets = json.loads(sys.argv[1])
-dotenv_path = sys.argv[2]
-
-with open(dotenv_path, "a") as dotenv:
-    for key, value in secrets.items():
-        if key == "PULP_DOCS_KEY":
-            # Test if the error only happens with PULP_DOCS_KEY
-            lines = len(value.split("\n"))
-            print(f"Skipping PULP_DOCS_KEY - Lines {lines}")
-            continue
-        print(f"Setting {key} ...")
-        dotenv.write(f"{key}={value}\n")
+for key, value in secrets.items():
+    print(f"Setting {key} ...")
+    lines = len(value.split("\n"))
+    if lines > 1:
+        os.system(f"echo '{key}<<EOF' >> $GITHUB_ENV")
+        os.system(f"echo '{value}' >> $GITHUB_ENV")
+        os.system("echo 'EOF' >> $GITHUB_ENV")
+    else:
+        os.system(f"echo '{key}={value}' >> $GITHUB_ENV")

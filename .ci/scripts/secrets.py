@@ -11,4 +11,4 @@ with open(dotenv_path, "a") as dotenv:
             print("Skipping PULP_DOCS_KEY")
             continue
         print(f"Setting {key} ...")
-        dotenv.write(f"{key}={value}")
+        dotenv.write(f"{key}={value}\n")

@@ -59,6 +59,11 @@ jobs:
         run: |
           .github/workflows/scripts/before_script.sh
 
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
       - name: Script
         run: .github/workflows/scripts/script.sh
         shell: bash
@@ -114,7 +119,7 @@ jobs:
         run: .github/workflows/scripts/before_script.sh
 
       - name: Setting secrets
-        run: python3 .ci/scripts/secrets.py "$SECRETS_CONTEXT"
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 

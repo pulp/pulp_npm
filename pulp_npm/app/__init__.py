@@ -6,3 +6,4 @@ class PulpNpmPluginAppConfig(PulpPluginAppConfig):
 
     name = "pulp_npm.app"
     label = "npm"
+    version = "0.1.0a3.dev"

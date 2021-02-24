@@ -40,7 +40,7 @@ def synchronize(remote_pk, repository_pk, mirror=False):
     # Interpret policy to download Artifacts or not
     deferred_download = remote.policy != Remote.IMMEDIATE
     first_stage = NpmFirstStage(remote, deferred_download)
-    DeclarativeVersion(first_stage, repository, mirror=mirror).create()
+    return DeclarativeVersion(first_stage, repository, mirror=mirror).create()
 
 
 class NpmFirstStage(Stage):

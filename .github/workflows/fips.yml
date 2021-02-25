@@ -29,6 +29,11 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
+      - name: Ansible
+        run: |
+          pip3 install -U pip
+          pip3 install "ansible>2.9,<3"
+          ansible --version
       - name: Pulp Installer
         run: |
           cd ..
@@ -45,15 +50,12 @@ jobs:
           cd ../pulp_installer
           sed -i "s/pulp-file/pulp-npm/g" example.dev-config.yml
           sed -i "s/pulp_file/pulp_npm/g" example.dev-config.yml
+          echo "vagrant ssh \$1 -c \"workon pulp && cd devel/pulp_npm && pip install -r functest_requirements.txt\"" >> .github/workflows/scripts/script.sh
+          echo "vagrant ssh \$1 -c \"workon pulp && cd devel/pulp_npm/ && pytest -v -r sx --color=yes --pyargs pulp_npm.tests.functional\"" >> .github/workflows/scripts/script.sh
           .github/workflows/scripts/script.sh ${{ matrix.test_type }}
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-      - name: Testing
-        run: |
-          cd ../pulp_installer
-          vagrant ssh $1 -c "workon pulp && cd devel/pulp_npm && pip install -r functest_requirements.txt"
-          vagrant ssh $1 -c "workon pulp && cd devel/pulp_npm/ && pytest -v -r sx --color=yes --pyargs pulp_npm.tests.functional"
       - name: After failure
         if: failure()
         run: |

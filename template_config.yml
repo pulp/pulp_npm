@@ -35,6 +35,7 @@ redmine_project: npm-plugin
 stable_branch: null
 test_bindings: false
 test_cli: false
+test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true

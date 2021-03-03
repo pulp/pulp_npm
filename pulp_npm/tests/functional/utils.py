@@ -25,7 +25,7 @@ from pulp_npm.tests.functional.constants import (
 def set_up_module():
     """Skip tests Pulp 3 isn't under test or if pulp_npm isn't installed."""
     require_pulp_3(SkipTest)
-    require_pulp_plugins({"pulp_npm"}, SkipTest)
+    require_pulp_plugins({"npm"}, SkipTest)
 
 
 def gen_npm_remote(url=NPM_FIXTURE_URL, **kwargs):

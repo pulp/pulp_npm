@@ -41,7 +41,7 @@ jobs:
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
+          echo "TEST=${{ env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
         run: .github/workflows/scripts/before_install.sh

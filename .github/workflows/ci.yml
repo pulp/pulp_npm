@@ -59,7 +59,7 @@ jobs:
 
       - name: Dispatching
         run: |
-          echo "{\"ref\": \"${GITHUB_REF##*/}\", \"inputs\": {\"pulpTestType\": \"s3\"}}" > data.json
+          echo "{\"ref\": \"${GITHUB_REF##*/}\", \"inputs\": {\"pulpTestType\": \"docs\"}}" > data.json
           cat data.json
           curl \
             -X POST \

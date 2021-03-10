@@ -57,6 +57,19 @@ jobs:
       - name: Check for pulpcore imports outside of pulpcore.plugin
         run: sh .ci/scripts/check_pulpcore_imports.sh
 
+      - name: Dispatching
+        run: |
+          echo "{\"ref\": \"${GITHUB_REF##*/}\", \"inputs\": {\"pulpTestType\": \"s3\"}}" > data.json
+          cat data.json
+          curl \
+            -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            https://api.github.com/repos/pulp/pulp_npm/actions/workflows/dispatch.yml/dispatches \
+            -d @data.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_POC_SECRET }}
+
   test:
     runs-on: ubuntu-latest
     # run only after lint finishes

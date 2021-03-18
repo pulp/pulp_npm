@@ -174,7 +174,7 @@ jobs:
 
       - name: ${{ matrix.name }}
         run: |
-          git checkout "$GITHUB_REF" -- .ci
+          git checkout "${GITHUB_REF##*/}" -- .ci
           ${{ matrix.command }}
 
       - name: After failure

@@ -173,7 +173,9 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: ${{ matrix.name }}
-        run: ${{ matrix.command }}
+        run: |
+          git checkout "$GITHUB_REF" -- .ci
+          ${{ matrix.command }}
 
       - name: After failure
         if: failure()

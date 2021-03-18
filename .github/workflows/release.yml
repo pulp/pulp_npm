@@ -105,6 +105,7 @@ jobs:
     needs: test
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: Deploy to pypi

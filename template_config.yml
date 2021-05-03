@@ -2,10 +2,12 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins: []
+additional_repos: []
 black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
+check_openapi_schema: true
 check_stray_pulpcore_imports: true
 cherry_pick_automation: false
 coverage: false
@@ -16,6 +18,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: false
 docs_test: false
+issue_tracker: redmine
 plugin_app_label: npm
 plugin_camel: PulpNpm
 plugin_camel_short: Npm
@@ -23,6 +26,7 @@ plugin_caps: PULP_NPM
 plugin_caps_short: NPM
 plugin_dash: pulp-npm
 plugin_dash_short: npm
+plugin_default_branch: master
 plugin_name: pulp_npm
 plugin_snake: pulp_npm
 publish_docs_to_pulpprojectdotorg: true

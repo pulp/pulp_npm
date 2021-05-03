@@ -1,9 +1,9 @@
-CONTENT_ORIGIN = "http://pulp:80"
-ANSIBLE_API_HOSTNAME = "http://pulp:80"
-ANSIBLE_CONTENT_HOSTNAME = "http://pulp:80/pulp/content"
+CONTENT_ORIGIN = "https://pulp:443"
+ANSIBLE_API_HOSTNAME = "https://pulp:443"
+ANSIBLE_CONTENT_HOSTNAME = "https://pulp:443/pulp/content"
 PRIVATE_KEY_PATH = "/etc/pulp/certs/token_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/certs/token_public_key.pem"
-TOKEN_SERVER = "http://pulp:80/token"
+TOKEN_SERVER = "https://pulp:443/token/"
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
 
 {% if pulp_settings %}

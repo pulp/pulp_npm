@@ -26,9 +26,11 @@ export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
+export PULP_URL="https://pulp"
+
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   cd docs
-  make PULP_URL="http://pulp" html
+  make PULP_URL="$PULP_URL" html
   cd ..
 
   echo "Validating OpenAPI schema..."
@@ -78,7 +80,7 @@ if [[ "$TEST" = 'bindings' || "$TEST" = 'publish' ]]; then
   gem build pulp_npm_client
   gem install --both ./pulp_npm_client-0.gem
   cd ..
-  ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
+  SSL_CERT_FILE=/usr/local/share/ca-certificates/pulp_ca.crt ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
   exit
 fi
 

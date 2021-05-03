@@ -95,6 +95,13 @@ fi
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
+# Hack: adding pulp CA to certifi.where()
+sudo docker cp pulp:/etc/pulp/certs/ca.crt /usr/local/share/ca-certificates/pulp_ca.crt
+CERT=$(python -c 'import certifi; print(certifi.where())')
+cat $CERT | sudo tee -a /usr/local/share/ca-certificates/pulp_ca.crt
+sudo update-ca-certificates
+sudo cp /usr/local/share/ca-certificates/pulp_ca.crt $CERT
+
 echo ::group::PIP_LIST
 cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
 echo ::endgroup::

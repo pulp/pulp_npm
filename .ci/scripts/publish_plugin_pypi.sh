@@ -12,17 +12,14 @@ cd "$(dirname "$(realpath -e "$0")")"/../..
 
 set -euv
 
-export VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin npm -r '.versions[] | select(.component == $plugin) | .version')
-echo "Checking $VERSION"
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-npm-client/$VERSION/)
+export PULP_URL="${PULP_URL:-http://pulp}"
+
+export VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin npm --arg legacy_plugin pulp_npm -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
+export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-npm/$VERSION/)
 if [ "$response" == "200" ];
 then
   echo "pulp_npm $VERSION has already been released. Skipping."
   exit
-else
-  echo "$response"
-  curl --write-out %{http_code} https://pypi.org/project/pulp-npm-client/$VERSION/
-  curl https://pypi.org/project/pulp-npm-client/$VERSION/
 fi
 
 pip install twine

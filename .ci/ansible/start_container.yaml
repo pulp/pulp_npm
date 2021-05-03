@@ -70,8 +70,9 @@
     - block:
         - name: "Wait for Pulp"
           uri:
-            url: "http://pulp/pulp/api/v3/status/"
+            url: "https://pulp/pulp/api/v3/status/"
             follow_redirects: none
+            validate_certs: no
           register: result
           until: result.status == 200
           retries: 12

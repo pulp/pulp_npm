@@ -5,7 +5,7 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp Release CI/CD
+name: Release Pipeline
 on:
   workflow_dispatch:
     inputs:
@@ -99,25 +99,9 @@ jobs:
           draft: false
           prerelease: false
 
-
   publish:
     runs-on: ubuntu-latest
     needs: test
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Deploy to pypi
-            command: bash .ci/scripts/publish_plugin_pypi.sh
-          - name: Publish client to rubygems
-            command: bash .ci/scripts/publish_client_gem.sh
-          - name: Publish client to pypi
-            command: bash .ci/scripts/publish_client_pypi.sh
-          - name: Publish docs to pulpproject.org
-            command: .ci/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
-          - name: Update Redmine
-            command: bash .ci/scripts/update_redmine.sh
 
     env:
       TEST: publish
@@ -137,6 +121,12 @@ jobs:
       - uses: actions/setup-ruby@v1
         with:
           ruby-version: "2.6"
+
+      # update to the branch's latest ci files rather than the ones from the release tag. this is
+      # helpful when there was a problem with the ci files during the release which needs to be
+      # fixed after the release tag has been created
+      - name: Update ci files
+        run: git checkout "origin/${GITHUB_REF##*/}" -- .ci
 
       - name: Install httpie
         run: |
@@ -171,11 +161,16 @@ jobs:
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
-
-      - name: ${{ matrix.name }}
-        run: |
-          git checkout "${GITHUB_REF##*/}" -- .ci
-          ${{ matrix.command }}
+      - name: Deploy plugin to pypi
+        run: bash .ci/scripts/publish_plugin_pypi.sh
+      - name: Publish client to rubygems
+        run: bash .ci/scripts/publish_client_gem.sh
+      - name: Publish client to pypi
+        run: bash .ci/scripts/publish_client_pypi.sh
+      - name: Publish docs to pulpproject.org
+        run: .ci/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
+      - name: Update Redmine
+        run: bash .ci/scripts/update_redmine.sh
 
       - name: After failure
         if: failure()

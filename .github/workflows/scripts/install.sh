@@ -95,12 +95,21 @@ fi
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
+echo ::group::SSL
+# Copy pulp CA
+sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
+
 # Hack: adding pulp CA to certifi.where()
-sudo docker cp pulp:/etc/pulp/certs/ca.crt /usr/local/share/ca-certificates/pulp_ca.crt
-CERT=$(python -c 'import certifi; print(certifi.where())')
-cat $CERT | sudo tee -a /usr/local/share/ca-certificates/pulp_ca.crt
+CERTIFI=$(python -c 'import certifi; print(certifi.where())')
+cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a $CERTIFI
+
+# Hack: adding pulp CA to default CA file
+CERT=$(python -c 'import ssl; print(ssl.get_default_verify_paths().openssl_cafile)')
+cat $CERTIFI | sudo tee -a $CERT
+
+# Updating certs
 sudo update-ca-certificates
-sudo cp /usr/local/share/ca-certificates/pulp_ca.crt $CERT
+echo ::endgroup::
 
 echo ::group::PIP_LIST
 cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"

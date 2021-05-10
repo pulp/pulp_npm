@@ -80,7 +80,7 @@ if [[ "$TEST" = 'bindings' || "$TEST" = 'publish' ]]; then
   gem build pulp_npm_client
   gem install --both ./pulp_npm_client-0.gem
   cd ..
-  SSL_CERT_FILE=/usr/local/share/ca-certificates/pulp_ca.crt ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
+  ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
   exit
 fi
 

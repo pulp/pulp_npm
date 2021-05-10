@@ -12,9 +12,9 @@ cd "$(dirname "$(realpath -e "$0")")"/../..
 
 set -euv
 
-export PULP_URL="${PULP_URL:-http://pulp}"
+export PULP_URL="${PULP_URL:-https://pulp}"
 
-export VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin npm --arg legacy_plugin pulp_npm -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
+export VERSION=$(http $PULP_URL/api/v3/status/ | jq --arg plugin npm --arg legacy_plugin pulp_npm -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
 export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-npm/$VERSION/)
 if [ "$response" == "200" ];
 then

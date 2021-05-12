@@ -20,7 +20,7 @@ from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
 )
-from pulpcore.plugin.tasking import enqueue_with_reservation
+from pulpcore.plugin.tasking import dispatch
 
 from . import models, serializers, tasks
 from .utils import pulp_npm_content_path
@@ -149,7 +149,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
         serializer.is_valid(raise_exception=True)
         remote = serializer.validated_data.get("remote")
 
-        result = enqueue_with_reservation(
+        result = dispatch(
             tasks.synchronize,
             [repository, remote],
             kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk},

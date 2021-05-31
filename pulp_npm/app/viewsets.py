@@ -165,7 +165,7 @@ class NpmRepositoryVersionViewSet(core.RepositoryVersionViewSet):
     parent_viewset = NpmRepositoryViewSet
 
 
-class NpmDistributionViewSet(core.BaseDistributionViewSet):
+class NpmDistributionViewSet(core.DistributionViewSet):
     """
     ViewSet for NPM Distributions.
     """

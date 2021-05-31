@@ -120,7 +120,7 @@ class NpmBaseURLField(serializers.CharField):
         return "/".join((origin.strip("/"), prefix.strip("/"), base_path.lstrip("/")))
 
 
-class NpmDistributionSerializer(platform.RepositoryVersionDistributionSerializer):
+class NpmDistributionSerializer(platform.DistributionSerializer):
     """
     Serializer for NPM Distributions.
     """
@@ -132,5 +132,5 @@ class NpmDistributionSerializer(platform.RepositoryVersionDistributionSerializer
     )
 
     class Meta:
-        fields = platform.RepositoryVersionDistributionSerializer.Meta.fields
+        fields = platform.DistributionSerializer.Meta.fields
         model = models.NpmDistribution

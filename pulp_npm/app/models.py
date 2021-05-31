@@ -13,7 +13,7 @@ from pulpcore.plugin.models import (
     Content,
     Remote,
     Repository,
-    RepositoryVersionDistribution,
+    Distribution,
 )
 
 logger = getLogger(__name__)
@@ -83,7 +83,7 @@ class NpmRepository(Repository):
         default_related_name = "%(app_label)s_%(model_name)s"
 
 
-class NpmDistribution(RepositoryVersionDistribution):
+class NpmDistribution(Distribution):
     """
     Distribution for "npm" content.
     """

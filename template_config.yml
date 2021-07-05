@@ -30,6 +30,7 @@ plugin_default_branch: master
 plugin_name: pulp_npm
 plugin_snake: pulp_npm
 publish_docs_to_pulpprojectdotorg: true
+pulp_scheme: https
 pulp_settings: null
 pulpcore_branch: master
 pulpcore_pip_version_specifier: null
@@ -37,6 +38,7 @@ pulpprojectdotorg_key_id: null
 pydocstyle: false
 pypi_username: pulp
 redmine_project: npm-plugin
+release_user: pulpbot
 stable_branch: null
 test_bindings: false
 test_cli: false
@@ -47,4 +49,5 @@ test_s3: true
 travis_addtl_services: []
 travis_notifications: null
 update_redmine: true
+upgrade_range: []
 

@@ -15,13 +15,6 @@ set -euv
 
 source .github/workflows/scripts/utils.sh
 
-if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
-then
-  TAG_BUILD=0
-else
-  TAG_BUILD=1
-fi
-
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install -r ../pulpcore/doc_requirements.txt
   pip install -r doc_requirements.txt
@@ -34,10 +27,12 @@ cd .ci/ansible/
 TAG=ci_build
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   PLUGIN_NAME=pulp_npm
+elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  PLUGIN_NAME=./pulp_npm/dist/pulp_npm-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulp_npm
 fi
-if [ "${TAG_BUILD}" = "1" ]; then
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   # Install the plugin only and use published PyPI packages for the rest
   # Quoting ${TAG} ensures Ansible casts the tag as a string.
   cat >> vars/main.yaml << VARSYAML
@@ -75,6 +70,8 @@ fi
 
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: null
+pulp_scheme: https
+pulp_container_tag: https
 VARSYAML
 
 if [ "$TEST" = "s3" ]; then
@@ -94,7 +91,6 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
-
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt

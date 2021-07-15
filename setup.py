@@ -23,8 +23,8 @@ setup(
         "Framework :: Django",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ),
     entry_points={"pulpcore.plugin": ["pulp_npm = pulp_npm:default_app_config"]},
 )

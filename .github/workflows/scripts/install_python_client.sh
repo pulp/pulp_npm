@@ -41,6 +41,6 @@ rm -rf pulp_npm-client
 ./generate.sh pulp_npm python $VERSION
 cd pulp_npm-client
 python setup.py sdist bdist_wheel --python-tag py3
-pip install dist/pulp_npm_client-$VERSION-py3-none-any.whl
+find . -name "*.whl" -exec pip install {} \;
 tar cvf ../../pulp_npm/python-client.tar ./dist
 exit $?

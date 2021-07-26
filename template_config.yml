@@ -1,6 +1,8 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
+# generated with plugin_template@2021.04.08-83-g72ba7e7
+
 additional_plugins: []
 additional_repos: []
 black: true
@@ -18,6 +20,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: false
 docs_test: false
+flake8: true
 issue_tracker: redmine
 plugin_app_label: npm
 plugin_camel: PulpNpm
@@ -40,6 +43,7 @@ pypi_username: pulp
 redmine_project: npm-plugin
 release_user: pulpbot
 stable_branch: null
+sync_ci: true
 test_bindings: false
 test_cli: false
 test_fips_nightly: false

@@ -11,16 +11,15 @@ on:
     # * is a special character in YAML so you have to quote this string
     # runs at 2:30 UTC daily
     - cron: '30 2 * * *'
-
+  
   workflow_dispatch:
-
-permissions:
-  contents: write
-  pull-requests: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v2
@@ -33,18 +32,18 @@ jobs:
       - name: Run update
         run: |
           .github/workflows/scripts/update_ci.sh
-          echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Create Pull Request for CI files
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.NPM_GITHUB_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          title: 'Update CI'
+          branch: ${GITHUB_REF#refs/heads/}-update-ci-files
+          base: ${GITHUB_REF#refs/heads/}
+          title: 'Update CI for ${GITHUB_REF#refs/heads/}'
           body: '[noissue]'
           commit-message: |
-            Update CI files
+            Update CI files for ${GITHUB_REF#refs/heads/}
 
             [noissue]
           delete-branch: true

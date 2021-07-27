@@ -38,6 +38,7 @@ jobs:
       - name: Create Pull Request for CI files
         uses: peter-evans/create-pull-request@v3
         with:
+          token: ${{ secrets.NPM_GITHUB_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           title: 'Update CI'

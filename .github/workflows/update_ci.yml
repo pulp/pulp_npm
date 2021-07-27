@@ -39,12 +39,10 @@ jobs:
         with:
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          branch: ${BRANCH}-update-ci-files
-          base: ${BRANCH}
-          title: 'Update CI for ${BRANCH}'
+          title: 'Update CI'
           body: '[noissue]'
           commit-message: |
-            Update CI files for ${GITHUB_REF#refs/heads/}
+            Update CI files
 
             [noissue]
           delete-branch: true

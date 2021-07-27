@@ -29,6 +29,11 @@ jobs:
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
 
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
       - name: Run update
         run: |
           .github/workflows/scripts/update_ci.sh

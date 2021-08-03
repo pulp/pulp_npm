@@ -71,7 +71,9 @@ fi
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: null
 pulp_scheme: https
+
 pulp_container_tag: https
+
 VARSYAML
 
 if [ "$TEST" = "s3" ]; then

@@ -151,8 +151,9 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
 
         result = dispatch(
             tasks.synchronize,
-            [repository, remote],
             kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk},
+            exclusive_resources=[repository],
+            shared_resources=[remote],
         )
         return core.OperationPostponedResponse(result, request)
 

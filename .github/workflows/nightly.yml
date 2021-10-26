@@ -22,6 +22,7 @@ jobs:
       matrix:
         env:
           - TEST: pulp
+          - TEST: azure
           - TEST: s3
           - TEST: generate-bindings
 

@@ -33,7 +33,7 @@ plugin_caps: PULP_NPM
 plugin_caps_short: NPM
 plugin_dash: pulp-npm
 plugin_dash_short: npm
-plugin_default_branch: master
+plugin_default_branch: main
 plugin_name: pulp_npm
 plugin_snake: pulp_npm
 post_job_template: null

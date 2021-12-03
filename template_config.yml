@@ -42,7 +42,7 @@ pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
 pulp_scheme: https
 pulp_settings: null
-pulpcore_branch: master
+pulpcore_branch: main
 pulpcore_pip_version_specifier: null
 pulpcore_revision: null
 pulpprojectdotorg_key_id: null

@@ -23,6 +23,7 @@ jobs:
       matrix:
         env:
           - TEST: pulp
+          - TEST: docs
           - TEST: azure
           - TEST: s3
           - TEST: generate-bindings
@@ -140,6 +141,12 @@ jobs:
         with:
           name: ruby-client.tar
           path: ruby-client.tar
+      - name: Upload built docs
+        if: ${{ env.TEST == 'docs' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: docs.tar
+          path: docs/docs.tar
 
       - name: Logs
         if: always()
@@ -321,6 +328,16 @@ jobs:
         run: bash .github/workflows/scripts/publish_client_pypi.sh
       
 
+      
+      - name: Download built docs
+        uses: actions/download-artifact@v2
+        with:
+          name: docs.tar
+
+      - name: Publish docs to pulpproject.org
+        run: |
+          tar -xvf docs.tar -C ./docs
+          .github/workflows/scripts/publish_docs.sh nightly ${GITHUB_REF##*/}
       
 
       - name: Logs

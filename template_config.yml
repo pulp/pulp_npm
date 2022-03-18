@@ -24,7 +24,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 disabled_redis_runners: []
 docker_fixtures: false
-docs_test: false
+docs_test: true
 flake8: true
 github_org: pulp
 issue_tracker: github

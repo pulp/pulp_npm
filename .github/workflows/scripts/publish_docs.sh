@@ -52,7 +52,6 @@ repo_name: pulp/pulp_npm
 repo_url: https://github.com/pulp/pulp_npm
 theme: readthedocs
 DOCSYAML
-ls -al
 
 # Building the bindings docs
 mkdocs build

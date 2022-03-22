@@ -39,7 +39,9 @@ fi
 
 pip install mkdocs pymdown-extensions
 
-cd ..
+mkdir -p ../bindings
+tar -xvf python-client-docs.tar --directory ../bindings
+cd ../bindings
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: PulpNpm Client
@@ -50,7 +52,6 @@ repo_name: pulp/pulp_npm
 repo_url: https://github.com/pulp/pulp_npm
 theme: readthedocs
 DOCSYAML
-tar -xvf python-client-docs.tar
 ls -al
 
 # Building the bindings docs

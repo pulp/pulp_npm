@@ -344,7 +344,7 @@ jobs:
       - name: Download Python client docs
         uses: actions/download-artifact@v2
         with:
-          name: ../python-client-docs.tar
+          name: python-client-docs.tar
 
       - name: Publish docs to pulpproject.org
         run: |

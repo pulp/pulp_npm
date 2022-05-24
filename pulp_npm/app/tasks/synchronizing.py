@@ -102,10 +102,10 @@ class NpmFirstStage(Stage):
             artifact = Artifact()  # make Artifact in memory-only
             url = pkg["dist"]["tarball"]
             da = DeclarativeArtifact(
-                artifact,
-                url,
-                url.split("/")[-1],
-                self.remote,
+                artifact=artifact,
+                url=url,
+                relative_path=url.split("/")[-1],
+                remote=self.remote,
                 deferred_download=self.deferred_download,
             )
             dc = DeclarativeContent(content=package, d_artifacts=[da])

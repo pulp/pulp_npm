@@ -1,1 +1,0 @@
-Adjusted the use of ``dispatch`` for pulpcore>=3.15. Also bumped the dependency.

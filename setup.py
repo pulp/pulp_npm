@@ -7,7 +7,7 @@ with open("requirements.txt") as requirements:
 
 setup(
     name="pulp-npm",
-    version="0.1.0a4.dev",
+    version="0.1.0a4",
     description="pulp-npm plugin for the Pulp Project",
     license="GPLv2+",
     author="Pulp NPM Plugin Project Developers",

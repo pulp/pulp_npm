@@ -15,11 +15,12 @@ ignore = [
     "dev_requirements.txt",
     "doc_requirements.txt",
     "docs/**",
-    "flake8.cfg",
     "template_config.yml",
     ".github/**",
     ".pep8speaks.yml",
-    ".ci/**"
+    ".ci/**",
+    "lint_requirements.txt",
+    ".flake8",
 ]
 
 [tool.black]

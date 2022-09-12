@@ -26,7 +26,7 @@ jobs:
         uses: leonsteinhaeuser/project-beta-automations@v1.3.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: ${{ github.actor }}
+          user: pulpbot
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
@@ -40,7 +40,7 @@ jobs:
         uses: leonsteinhaeuser/project-beta-automations@v1.3.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: ${{ github.actor }}
+          user: pulpbot
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
@@ -74,7 +74,7 @@ jobs:
         uses: leonsteinhaeuser/project-beta-automations@v1.3.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: ${{ github.actor }}
+          user: pulpbot
           project_id: 8
           resource_node_id: ${{ matrix.issues.issue.node_id }}
           operation_mode: status
@@ -88,7 +88,7 @@ jobs:
         uses: leonsteinhaeuser/project-beta-automations@v1.3.0
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
-          user: ${{ github.actor }}
+          user: pulpbot
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status

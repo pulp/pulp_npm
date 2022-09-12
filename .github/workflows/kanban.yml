@@ -3,10 +3,13 @@
 ---
 name: Kanban
 on:
+  pull_request_target:
   issues:
     types:
       - labeled
       - reopened
+      - assigned
+      - closed
 
 env:
   free_to_take: Free to take
@@ -16,7 +19,7 @@ env:
 jobs:
   # only prio-list labeled items should be added to the board
   add-to-project-board:
-    if: contains(github.event.issue.labels.*.name, 'prio-list')
+    if: github.event_name == "issues" && contains(github.event.issue.labels.*.name, 'prio-list') && contains(fromJson('["labeled", "reopened"]'), github.event.action)
     runs-on: ubuntu-latest
     steps:
       - name: Add issue to Free-to-take list
@@ -28,20 +31,9 @@ jobs:
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
           status_value: ${{ env.free_to_take }} # Target status
----
-name: Kanban
-on:
-  issues:
-    types:
-      - assigned
 
-env:
-  free_to_take: Free to take
-  in_progress: In Progress
-  needs_review: Needs review
-
-jobs:
   move-to-inprogress:
+    if: github.event_name == "issues" && github.event.action == 'assigned'
     runs-on: ubuntu-latest
     steps:
       - name: Move an issue to the In Progress column
@@ -53,21 +45,9 @@ jobs:
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
           status_value: ${{ env.in_progress }} # Target status
----
-name: Kanban
 
-on:
-  # Requires the event trigger to be of type pull_request or pull_request_target
-  pull_request_target
-
-env:
-  free_to_take: Free To Take
-  in_progress: In Progress
-  needs_review: Needs Review
-  done: Done
-
-jobs:
   find-linked-issues:
+    if: github.event_name == "pull_request_target"
     runs-on: ubuntu-latest
     name: Find issues linked to a PR
     outputs:
@@ -80,8 +60,9 @@ jobs:
         id: linked-issues
         with:
           access-token: ${{ secrets.RELEASE_TOKEN }}
+
   move-to-needs-review:
-    if: github.event.action != 'closed'
+    if: github.event_name == "pull_request_target" && github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: Move linked issues to Needs Review
     needs: find-linked-issues
@@ -98,21 +79,9 @@ jobs:
           resource_node_id: ${{ matrix.issues.issue.node_id }}
           operation_mode: status
           status_value: ${{ env.needs_review }} # Target status
----
-name: Kanban
-on:
-  issues:
-    types:
-      - closed
 
-env:
-  free_to_take: Free to take
-  in_progress: In Progress
-  needs_review: Needs review
-  done: Done
-
-jobs:
   move-to-done:
+    if: github.event_name == "issues" && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Move an issue to the Done column

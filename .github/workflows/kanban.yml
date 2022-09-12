@@ -62,9 +62,9 @@ jobs:
           access-token: ${{ secrets.RELEASE_TOKEN }}
       - name: debug
         id: testing
-        run: echo '${{ steps.linked-issues.outputs }}'
+        run: echo '${{ toJSON(steps.linked-issues.outputs) }}'
       - name: debug2
-        run: echo '${{ steps.testing.outputs }}'
+        run: echo '${{ toJSON(steps.testing.outputs) }}'
 
   move-to-needs-review:
     if: github.event_name == 'pull_request_target' && github.event.action != 'closed'

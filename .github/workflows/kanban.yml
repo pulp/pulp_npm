@@ -72,7 +72,7 @@ jobs:
           echo '${{ toJSON(steps.linked-issues.outputs.issues ) }}'
 
   move-to-needs-review:
-    if: github.event_name == 'pull_request_target' && contains(needs.find-linked-issues.outputs.linked-issues.*.issue.state, 'open')
+    if: github.event_name == 'pull_request_target' && contains(fromJson(needs.find-linked-issues.outputs.linked-issues).*.issue.state, 'open')
     runs-on: ubuntu-latest
     name: Move linked issues to Needs Review
     needs: find-linked-issues

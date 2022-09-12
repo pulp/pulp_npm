@@ -70,18 +70,8 @@ jobs:
       matrix:
         issues: ${{ fromJSON(needs.find-linked-issues.outputs.linked-issues) }}
     steps:
-      - name: debug
-        run: echo '${{ matrix.issues }}'
-      - name: test 1
-        if: matrix.issues != 0
-        run: echo "filter test"
-      - name: test 2
-        if: matrix.issues == 0
-        run: echo "filter test"
       - name: Move to Needs Review
         uses: leonsteinhaeuser/project-beta-automations@v1.3.0
-        env:
-          DEBUG_LOG: "true"
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
           user: pulpbot

@@ -67,12 +67,13 @@ jobs:
           if [[ "$ISSUES" == "[]" ]]; then
             echo "aaaaaa"
           fi
+          echo $ISSUES
           echo "bbbbbbb"
       - name: debug2
         run: echo '${{ toJSON(steps.testing.outputs) }}'
 
   move-to-needs-review:
-    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+    if: github.event_name == 'pull_request_target' && contains(needs.find-linked-issues.outputs.linked-issues.*.issue.state, 'open')
     runs-on: ubuntu-latest
     name: Move linked issues to Needs Review
     needs: find-linked-issues

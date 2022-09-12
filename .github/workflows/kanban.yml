@@ -60,16 +60,6 @@ jobs:
         id: linked-issues
         with:
           access-token: ${{ secrets.RELEASE_TOKEN }}
-      - name: debug
-        id: testing
-        run: |
-          ISSUES=$(echo '${{ toJSON(steps.linked-issues.outputs ) }}' | jq .issues)
-          if [[ "$ISSUES" == "[]" ]]; then
-            echo "aaaaaa"
-          fi
-          echo $ISSUES
-          echo "bbbbbbb"
-          echo '${{ toJSON(steps.linked-issues.outputs.issues ) }}'
 
   move-to-needs-review:
     if: github.event_name == 'pull_request_target' && contains(fromJson(needs.find-linked-issues.outputs.linked-issues).*.issue.state, 'open')

@@ -60,6 +60,11 @@ jobs:
         id: linked-issues
         with:
           access-token: ${{ secrets.RELEASE_TOKEN }}
+      - name: debug
+        id: testing
+        run: echo '${{ linked-issues.outputs }}'
+      - name: debug2
+        run: echo '${{ testing.outputs }}'
 
   move-to-needs-review:
     if: github.event_name == 'pull_request_target' && github.event.action != 'closed'

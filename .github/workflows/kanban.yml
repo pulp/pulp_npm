@@ -1,4 +1,6 @@
 # Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
+
+---
 name: Kanban
 on:
   issues:
@@ -27,7 +29,6 @@ jobs:
           operation_mode: status
           status_value: ${{ env.free_to_take }} # Target status
 ---
-# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
 name: Kanban
 on:
   issues:
@@ -53,7 +54,6 @@ jobs:
           operation_mode: status
           status_value: ${{ env.in_progress }} # Target status
 ---
-# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
 name: Kanban
 
 on:
@@ -99,7 +99,6 @@ jobs:
           operation_mode: status
           status_value: ${{ env.needs_review }} # Target status
 ---
-# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
 name: Kanban
 on:
   issues:

@@ -1,0 +1,138 @@
+---
+# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
+name: Kanban
+on:
+  issues:
+    types:
+      - labeled
+      - reopened
+
+env:
+  free_to_take: Free to take
+  in_progress: In Progress
+  needs_review: Needs review
+
+jobs:
+  # only prio-list labeled items should be added to the board
+  add-to-project-board:
+    if: contains(github.event.issue.labels.*.name, 'prio-list')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue to Free-to-take list
+        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        env:
+          DEBUG_LOG: "true"
+        with:
+          gh_token: ${{ secrets.RELEASE_TOKEN }}
+          user: ${{ github.actor }}
+          project_id: 8
+          resource_node_id: ${{ github.event.issue.node_id }}
+          operation_mode: status
+          status_value: ${{ env.free_to_take }} # Target status
+---
+# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
+name: Kanban
+on:
+  issues:
+    types:
+      - assigned
+
+env:
+  free_to_take: Free to take
+  in_progress: In Progress
+  needs_review: Needs review
+
+jobs:
+  move-to-inprogress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move an issue to the In Progress column
+        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        env:
+          DEBUG_LOG: "true"
+        with:
+          gh_token: ${{ secrets.RELEASE_TOKEN }}
+          user: ${{ github.actor }}
+          project_id: 8
+          resource_node_id: ${{ github.event.issue.node_id }}
+          operation_mode: status
+          status_value: ${{ env.in_progress }} # Target status
+---
+# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
+name: Kanban
+
+on:
+  # Requires the event trigger to be of type pull_request or pull_request_target
+  pull_request_target
+
+env:
+  free_to_take: Free To Take
+  in_progress: In Progress
+  needs_review: Needs Review
+  done: Done
+
+jobs:
+  find-linked-issues:
+    runs-on: ubuntu-latest
+    name: Find issues linked to a PR
+    outputs:
+        linked-issues: ${{ steps.linked-issues.outputs.issues }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Get Linked Issues Action
+        uses: kin/gh-action-get-linked-issues@v1.0
+        id: linked-issues
+        with:
+          access-token: ${{ secrets.RELEASE_TOKEN }}
+      - name: debug
+        run: echo '${{ toJSON(steps) }}'
+  move-to-needs-review:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: Move linked issues to Needs Review
+    needs: find-linked-issues
+    strategy:
+      matrix:
+        issues: ${{ fromJSON(needs.find-linked-issues.outputs.linked-issues) }}
+    steps:
+      - name: debug
+        run: echo '${{ toJSON(github) }}'
+      - name: Move to Needs Review
+        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        with:
+          gh_token: ${{ secrets.RELEASE_TOKEN }}
+          user: ${{ github.actor }}
+          project_id: 8
+          resource_node_id: ${{ matrix.issues.issue.node_id }}
+          operation_mode: status
+          status_value: ${{ env.needs_review }} # Target status
+---
+# Manage issues in a project board using https://github.com/leonsteinhaeuser/project-beta-automations
+name: Kanban
+on:
+  issues:
+    types:
+      - closed
+
+env:
+  free_to_take: Free to take
+  in_progress: In Progress
+  needs_review: Needs review
+  done: Done
+
+jobs:
+  move-to-done:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move an issue to the Done column
+        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        env:
+          DEBUG_LOG: "true"
+        with:
+          gh_token: ${{ secrets.RELEASE_TOKEN }}
+          user: ${{ github.actor }}
+          project_id: 8
+          resource_node_id: ${{ github.event.issue.node_id }}
+          operation_mode: status
+          status_value: ${{ env.done }} # Target status

@@ -19,7 +19,7 @@ env:
 jobs:
   # only prio-list labeled items should be added to the board
   add-to-project-board:
-    if: github.event_name == "issues" && contains(github.event.issue.labels.*.name, 'prio-list') && contains(fromJson('["labeled", "reopened"]'), github.event.action)
+    if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'prio-list') && contains(fromJson('["labeled", "reopened"]'), github.event.action)
     runs-on: ubuntu-latest
     steps:
       - name: Add issue to Free-to-take list
@@ -33,7 +33,7 @@ jobs:
           status_value: ${{ env.free_to_take }} # Target status
 
   move-to-inprogress:
-    if: github.event_name == "issues" && github.event.action == 'assigned'
+    if: github.event_name == 'issues' && github.event.action == 'assigned'
     runs-on: ubuntu-latest
     steps:
       - name: Move an issue to the In Progress column
@@ -47,7 +47,7 @@ jobs:
           status_value: ${{ env.in_progress }} # Target status
 
   find-linked-issues:
-    if: github.event_name == "pull_request_target"
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     name: Find issues linked to a PR
     outputs:
@@ -62,7 +62,7 @@ jobs:
           access-token: ${{ secrets.RELEASE_TOKEN }}
 
   move-to-needs-review:
-    if: github.event_name == "pull_request_target" && github.event.action != 'closed'
+    if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: Move linked issues to Needs Review
     needs: find-linked-issues
@@ -81,7 +81,7 @@ jobs:
           status_value: ${{ env.needs_review }} # Target status
 
   move-to-done:
-    if: github.event_name == "issues" && github.event.action == 'closed'
+    if: github.event_name == 'issues' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Move an issue to the Done column

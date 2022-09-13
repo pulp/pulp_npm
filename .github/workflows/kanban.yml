@@ -27,7 +27,6 @@ jobs:
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
           user: pulpbot
-          organization: pulp
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
@@ -42,7 +41,6 @@ jobs:
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
           user: pulpbot
-          organization: pulp
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status
@@ -78,7 +76,6 @@ jobs:
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
           user: pulpbot
-          organization: pulp
           project_id: 8
           resource_node_id: ${{ matrix.issues.issue.node_id }}
           operation_mode: status
@@ -93,7 +90,6 @@ jobs:
         with:
           gh_token: ${{ secrets.RELEASE_TOKEN }}
           user: pulpbot
-          organization: pulp
           project_id: 8
           resource_node_id: ${{ github.event.issue.node_id }}
           operation_mode: status

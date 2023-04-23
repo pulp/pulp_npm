@@ -17,56 +17,41 @@ source .github/workflows/scripts/utils.sh
 
 export PULP_API_ROOT="/pulp/"
 
-if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
-  pip install -r ../pulpcore/doc_requirements.txt
-  pip install -r doc_requirements.txt
+PIP_REQUIREMENTS=("pulp-cli")
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]
+then
+  PIP_REQUIREMENTS+=("-r" "doc_requirements.txt")
 fi
+
+pip install ${PIP_REQUIREMENTS[*]}
+
+
 
 cd .ci/ansible/
 
-TAG=ci_build
-PULPCORE=./pulpcore
-if [[ "$TEST" == "plugin-from-pypi" ]]; then
-  PLUGIN_NAME=pulp_npm
-elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   PLUGIN_NAME=./pulp_npm/dist/pulp_npm-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulp_npm
 fi
-if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
-  # Install the plugin only and use published PyPI packages for the rest
-  # Quoting ${TAG} ensures Ansible casts the tag as a string.
-  cat >> vars/main.yaml << VARSYAML
+cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
-  tag: "${TAG}"
-plugins:
-  - name: pulpcore
-    source: pulpcore
-  - name: pulp_npm
-    source:  "${PLUGIN_NAME}"
-  - name: pulp-smash
-    source: ./pulp-smash
-VARSYAML
-else
-  cat >> vars/main.yaml << VARSYAML
-image:
-  name: pulp
-  tag: "${TAG}"
+  tag: "ci_build"
 plugins:
   - name: pulp_npm
     source: "${PLUGIN_NAME}"
-  - name: pulpcore
-    source: "${PULPCORE}"
-  - name: pulp-smash
-    source: ./pulp-smash
+VARSYAML
+if [[ -f ../../ci_requirements.txt ]]; then
+  cat >> vars/main.yaml << VARSYAML
+    ci_requirements: true
 VARSYAML
 fi
 
 cat >> vars/main.yaml << VARSYAML
 services:
   - name: pulp
-    image: "pulp:${TAG}"
+    image: "pulp:ci_build"
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
@@ -126,6 +111,9 @@ if [ "${PULP_API_ROOT:-}" ]; then
   sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
 fi
 
+pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT"
+
+
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
@@ -133,8 +121,8 @@ ansible-playbook start_container.yaml
 # files will likely be modified on the host by post/pre scripts.
 chmod 777 ~/.config/pulp_smash/
 chmod 666 ~/.config/pulp_smash/settings.json
-sudo chown -R 700:700 ~runner/.config
 
+sudo chown -R 700:700 ~/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt

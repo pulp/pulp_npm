@@ -31,6 +31,13 @@ pip install ${PIP_REQUIREMENTS[*]}
 
 
 cd .ci/ansible/
+PLUGIN_SOURCE="${PLUGIN_NAME}"
+if [ "$TEST" = "s3" ]; then
+  PLUGIN_SOURCE="${PLUGIN_SOURCE} pulpcore[s3]"
+fi
+if [ "$TEST" = "azure" ]; then
+  PLUGIN_SOURCE="${PLUGIN_SOURCE} pulpcore[azure]"
+fi
 
 cat >> vars/main.yaml << VARSYAML
 image:
@@ -38,11 +45,16 @@ image:
   tag: "ci_build"
 plugins:
   - name: pulp_npm
-    source: "${PLUGIN_NAME}"
+    source: "${PLUGIN_SOURCE}"
 VARSYAML
 if [[ -f ../../ci_requirements.txt ]]; then
   cat >> vars/main.yaml << VARSYAML
     ci_requirements: true
+VARSYAML
+fi
+if [ "$TEST" = "lowerbounds" ]; then
+  cat >> vars/main.yaml << VARSYAML
+    lowerbounds: true
 VARSYAML
 fi
 

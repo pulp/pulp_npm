@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
-
 from setuptools import find_packages, setup
+
+with open("README.md") as f:
+    long_description = f.read()
 
 with open("requirements.txt") as requirements:
     requirements = requirements.readlines()
@@ -9,6 +10,8 @@ setup(
     name="pulp-npm",
     version="0.1.0a5.dev",
     description="pulp-npm plugin for the Pulp Project",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     license="GPLv2+",
     author="Pulp NPM Plugin Project Developers",
     author_email="pulp-dev@redhat.com",

@@ -16,7 +16,7 @@ set -euv
 source .github/workflows/scripts/utils.sh
 
 PLUGIN_VERSION="$(sed -n -e 's/^\s*current_version\s*=\s*//p' .bumpversion.cfg | python -c 'from packaging.version import Version; print(Version(input()))')"
-PLUGIN_NAME="./pulp_npm/dist/pulp_npm-${PLUGIN_VERSION}-py3-none-any.whl"
+PLUGIN_SOURCE="./pulp_npm/dist/pulp_npm-${PLUGIN_VERSION}-py3-none-any.whl"
 
 export PULP_API_ROOT="/pulp/"
 
@@ -31,7 +31,6 @@ pip install ${PIP_REQUIREMENTS[*]}
 
 
 cd .ci/ansible/
-PLUGIN_SOURCE="${PLUGIN_NAME}"
 if [ "$TEST" = "s3" ]; then
   PLUGIN_SOURCE="${PLUGIN_SOURCE} pulpcore[s3]"
 fi

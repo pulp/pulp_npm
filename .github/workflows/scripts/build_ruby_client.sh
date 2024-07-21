@@ -18,15 +18,7 @@ cd "$(dirname "$(realpath -e "$0")")"/../../..
 pushd ../pulp-openapi-generator
 rm -rf "pulp_npm-client"
 
-# We need to copy that over to be visible in the container.
-#cp "../pulp_npm/npm-api.json" .
-#./gen-client.sh "npm-api.json" "npm" ruby "pulp_npm"
-
-# -------------
-# The generator still needs to have it called api.json at this time...
-cp "../pulp_npm/api.json" .
-./gen-client.sh "api.json" "npm" ruby "pulp_npm"
-# -------------
+./gen-client.sh "../pulp_npm/npm-api.json" "npm" ruby "pulp_npm"
 
 pushd pulp_npm-client
 gem build pulp_npm_client

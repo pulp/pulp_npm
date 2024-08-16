@@ -84,6 +84,7 @@ jobs:
       - "check-commits"
       - "lint"
       - "test"
+      - "docs"
     if: "always()"
     steps:
       - name: "Collect needed jobs results"

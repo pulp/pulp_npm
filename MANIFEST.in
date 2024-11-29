@@ -1,5 +1,6 @@
 include CHANGES.md
 include COMMITMENT
+exclude CONTRIBUTING.md
 include COPYRIGHT
 include LICENSE
 include functest_requirements.txt

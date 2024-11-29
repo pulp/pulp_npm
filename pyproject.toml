@@ -1,3 +1,45 @@
+[build-system]
+requires = [
+    "setuptools >= 40.8.0",
+    "wheel >= 0.29.0",
+]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "pulp-npm"
+version = "0.1.0a5.dev"
+description = "pulp-npm plugin for the Pulp Project"
+readme = "README.md"
+authors = [
+  {name="Pulp Team", email="pulp-list@redhat.com"},
+]
+classifiers=[
+  "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+  "Operating System :: POSIX :: Linux",
+  "Framework :: Django",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+]
+requires-python = ">=3.6"
+dependencies = [
+  "pulpcore>=3.28.15,<3.70",
+]
+
+[project.urls]
+Homepage = "https://pulpproject.org"
+Documentation = "https://pulpproject.org/pulp_npm/"
+Repository = "https://github.com/pulp/pulp_npm"
+"Bug Tracker" = "https://github.com/pulp/pulp_npm/issues"
+Changelog = "https://pulpproject.org/pulp_npm/changes/"
+
+[project.entry-points."pulpcore.plugin"]
+pulp_npm = "pulp_npm:default_app_config"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
 [tool.towncrier]
 package = "pulp_npm"
 filename = "CHANGES.md"
@@ -10,10 +52,7 @@ underlines = ["", "", ""]
 
 [tool.check-manifest]
 ignore = [
-    ".bumpversion.cfg",
     "CHANGES/**",
-    "CONTRIBUTING.rst",
-    "HISTORY.rst",
     "dev_requirements.txt",
     "doc_requirements.txt",
     "docs/**",

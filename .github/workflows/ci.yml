@@ -42,9 +42,6 @@ jobs:
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
         run: |
           .github/workflows/scripts/check_commit.sh
-      - name: "Verify requirements files"
-        run: |
-          python .ci/scripts/check_requirements.py
 
   lint:
     uses: "./.github/workflows/lint.yml"
@@ -56,6 +53,9 @@ jobs:
   test:
     needs: "build"
     uses: "./.github/workflows/test.yml"
+    with:
+      matrix_env: |
+        [{"TEST": "pulp"}, {"TEST": "azure"}, {"TEST": "s3"}, {"TEST": "lowerbounds"}]
 
   deprecations:
     runs-on: "ubuntu-latest"
@@ -84,7 +84,6 @@ jobs:
       - "check-commits"
       - "lint"
       - "test"
-      - "docs"
     if: "always()"
     steps:
       - name: "Collect needed jobs results"

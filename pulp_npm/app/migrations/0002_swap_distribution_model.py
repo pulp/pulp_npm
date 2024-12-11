@@ -51,7 +51,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('npm', '0001_initial'),
-        ('core', '0062_add_new_distribution_mastermodel'),
     ]
 
     operations = [

@@ -1,6 +1,8 @@
 # coding=utf-8
 """Tests that perform actions over content unit."""
+import pytest
 import unittest
+import uuid
 
 from requests.exceptions import HTTPError
 
@@ -101,3 +103,13 @@ class ContentUnitTestCase(unittest.TestCase):
         with self.assertRaises(HTTPError) as exc:
             self.client.delete(self.content_unit["pulp_href"])
         self.assertEqual(exc.exception.response.status_code, 405)
+
+
+@pytest.mark.parallel
+def test_repository_creation_with_remote(npm_bindings):
+    remote = npm_bindings.RemotesNpmApi.create({"name": str(uuid.uuid4()), "url": "http://npm"})
+    repository = npm_bindings.RepositoriesNpmApi.create(
+        {"name": str(uuid.uuid4()), "remote": remote.pulp_href}
+    )
+
+    assert repository.remote == remote.pulp_href

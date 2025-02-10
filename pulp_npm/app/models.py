@@ -78,6 +78,7 @@ class NpmRepository(Repository):
     TYPE = "npm"
 
     CONTENT_TYPES = [Package]
+    REMOTE_TYPES = [NpmRemote]
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

@@ -1,0 +1,1 @@
+Fixes a sync operation demanding the remote URL when the repository already have one.

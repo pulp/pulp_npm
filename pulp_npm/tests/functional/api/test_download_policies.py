@@ -1,92 +1,60 @@
 # coding=utf-8
 """Tests for Pulp`s download policies."""
-import unittest
+import json
+import pytest
+from urllib.parse import urljoin
 
-from pulp_smash import api, config
-from pulp_smash.pulp3.utils import (
-    gen_repo,
-    get_added_content_summary,
-    get_content_summary,
-    sync,
-)
-
-from pulp_npm.tests.functional.constants import (
-    NPM_FIXTURE_SUMMARY,
-    NPM_REMOTE_PATH,
-    NPM_REPO_PATH,
-    DOWNLOAD_POLICIES,
-)
-from pulp_npm.tests.functional.utils import gen_npm_remote, skip_if
-from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
+from pulpcore.client.pulp_npm import RepositorySyncURL
 
 
-# Implement sync support before enabling this test.
-@unittest.skip("FIXME: plugin writer action required")
-class SyncDownloadPolicyTestCase(unittest.TestCase):
-    """Sync a repository with different download policies.
+@pytest.mark.parametrize("policy", ["on_demand", "immediate", "streamed"])
+@pytest.mark.parallel
+def test_sync(
+    policy,
+    npm_bindings,
+    npm_remote_factory,
+    npm_repository_factory,
+    npm_distribution_factory,
+    monitor_task,
+    get_npm_content_paths,
+    http_get,
+):
+    """Sync repositories with the different ``download_policy``.
 
-    This test targets the following issue:
+    Do the following:
 
-    `Pulp #4126 <https://pulp.plan.io/issues/4126>`_
+    1. Create a repository, and a remote.
+    2. Assert that repository version is None.
+    3. Sync the remote.
+    4. Assert that repository version is not None.
+    5. Assert that the correct number of possible units to be downloaded
+        were shown.
+    6. Try to download content using content metadata
     """
+    remote = npm_remote_factory(url="https://registry.npmjs.org/commander/4.0.1", policy=policy)
+    repository = npm_repository_factory(remote=remote.pulp_href)
+    repository_version = int(repository.latest_version_href.split("/")[-2])
+    assert repository_version == 0
 
-    @classmethod
-    def setUpClass(cls):
-        """Create class-wide variables."""
-        cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg, api.json_handler)
-        cls.DP_ON_DEMAND = "on_demand" in DOWNLOAD_POLICIES
-        cls.DP_STREAMED = "streamed" in DOWNLOAD_POLICIES
+    content = get_npm_content_paths(repository)
+    assert len(content) == 0
 
-    @skip_if(bool, "DP_ON_DEMAND", False)
-    def test_on_demand(self):
-        """Sync with ``on_demand`` download policy. See :meth:`do_test`."""
-        self.do_test("on_demand")
+    sync_payload = RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repository.pulp_href, sync_payload).task)
 
-    @skip_if(bool, "DP_STREAMED", False)
-    def test_streamed(self):
-        """Sync with ``streamend`` download policy.  See :meth:`do_test`."""
-        self.do_test("streamed")
+    first_synced_repository = npm_bindings.RepositoriesNpmApi.read(repository.pulp_href)
+    first_synced_repository_version = int(
+        first_synced_repository.latest_version_href.split("/")[-2]
+    )
+    assert first_synced_repository_version == 1
 
-    def do_test(self, download_policy):
-        """Sync repositories with the different ``download_policy``.
+    content = get_npm_content_paths(first_synced_repository)
+    assert len(content) == 1
 
-        Do the following:
+    distribution = npm_distribution_factory(repository=first_synced_repository.pulp_href)
+    content_metadata = json.loads(http_get(urljoin(distribution.base_url, "commander")))
 
-        1. Create a repository, and a remote.
-        2. Assert that repository version is None.
-        3. Sync the remote.
-        4. Assert that repository version is not None.
-        5. Assert that the correct number of possible units to be downloaded
-           were shown.
-        6. Sync the remote one more time in order to create another repository
-           version.
-        7. Assert that repository version is different from the previous one.
-        8. Assert that the same number of units are shown, and after the
-           second sync no extra units should be shown, since the same remote
-           was synced again.
-        """
-        repo = self.client.post(NPM_REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["pulp_href"])
+    latest_version_available = content_metadata["dist-tags"]["latest"]
+    tarball_path = content_metadata["versions"][latest_version_available]["dist"]["tarball"]
 
-        body = gen_npm_remote(**{"policy": download_policy})
-        remote = self.client.post(NPM_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["pulp_href"])
-
-        # Sync the repository.
-        self.assertIsNone(repo["latest_version_href"])
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
-
-        self.assertIsNotNone(repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), NPM_FIXTURE_SUMMARY)
-        self.assertDictEqual(get_added_content_summary(repo), NPM_FIXTURE_SUMMARY)
-
-        # Sync the repository again.
-        latest_version_href = repo["latest_version_href"]
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
-
-        self.assertNotEqual(latest_version_href, repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), NPM_FIXTURE_SUMMARY)
-        self.assertDictEqual(get_added_content_summary(repo), {})
+    http_get(tarball_path)

@@ -1,8 +1,17 @@
-from django.conf import settings
+def urlpath_sanitize(*args):
+    """
+    Join an arbitrary number of strings into a /-separated path.
 
+    Replaces uses of urljoin() that don't want/need urljoin's subtle semantics.
 
-def pulp_npm_content_path():
-    """Get base cotent path from configuration."""
-    components = settings.CONTENT_PATH_PREFIX.split("/")
-    components[1] = "pulp_npm"
-    return "/".join(components)
+    Returns: single string provided arguments separated by single-slashes
+
+    Args:
+        Arbitrary list of arguments to be join()ed
+    """
+    segments = []
+    for a in args + ("",):
+        stripped = a.strip("/")
+        if stripped:
+            segments.append(stripped)
+    return "/".join(segments)

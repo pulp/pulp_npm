@@ -1,18 +1,8 @@
-"""
-Check `Plugin Writer's Guide`_ for more details.
-
-.. _Plugin Writer's Guide:
-    http://docs.pulpproject.org/en/3.0/nightly/plugins/plugin-writer/index.html
-"""
-
-from django.conf import settings
-
 from django.db import transaction
 from drf_spectacular.utils import extend_schema
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from pulpcore.plugin import viewsets as core
@@ -24,7 +14,6 @@ from pulpcore.plugin.serializers import (
 from pulpcore.plugin.tasking import dispatch
 
 from . import models, serializers, tasks
-from .utils import pulp_npm_content_path
 
 
 class PackageFilter(core.ContentFilter):
@@ -177,56 +166,3 @@ class NpmDistributionViewSet(core.DistributionViewSet):
     endpoint_name = "npm"
     queryset = models.NpmDistribution.objects.all()
     serializer_class = serializers.NpmDistributionSerializer
-
-
-class PublishedPackageViewSet(APIView):
-    """
-    ViewSet for Published packages.
-    """
-
-    authentication_classes = []
-    permission_classes = []
-
-    def get(self, request, name):
-        """
-        Return a published package.
-        """
-        data = {}
-
-        distributions = models.NpmDistribution.objects.all()
-        for distribution in distributions:
-            repository_version = distribution.repository_version
-            if not repository_version:
-                repository_version = distribution.repository.latest_version()
-            content = repository_version.content
-            packages = models.Package.objects.filter(name=name, pk__in=content)
-
-            if packages.count():
-                data["name"] = name
-                data["versions"] = {}
-                versions = []
-
-            for package in packages:
-                origin = settings.CONTENT_ORIGIN
-                prefix = pulp_npm_content_path()
-                tarball_url = "/".join(
-                    (
-                        origin.strip("/"),
-                        prefix.strip("/"),
-                        distribution.base_path.strip("/"),
-                        package.relative_path.split("/")[-1],
-                    )
-                )
-
-                version = {
-                    package.version: {
-                        "_id": f"{package.name}@{package.version}",
-                        "dist": {"tarball": tarball_url},
-                    }
-                }
-                versions.append(package.version)
-                data["versions"].update(version)
-
-        data["dist-tags"] = {"latest": max(versions)}
-
-        return Response(data)

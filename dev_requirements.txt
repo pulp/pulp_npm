@@ -2,9 +2,6 @@ check-manifest
 coverage
 black
 flake8
-
 flake8-black
-
-
 flake8-tuple
 flake8-quotes

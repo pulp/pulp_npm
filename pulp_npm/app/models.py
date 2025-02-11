@@ -5,9 +5,13 @@ Check `Plugin Writer's Guide`_ for more details.
     http://docs.pulpproject.org/en/3.0/nightly/plugins/plugin-writer/index.html
 """
 
+import json
 from logging import getLogger
 
+from aiohttp.web_response import Response
+from django.conf import settings
 from django.db import models
+
 
 from pulpcore.plugin.models import (
     Content,
@@ -15,6 +19,9 @@ from pulpcore.plugin.models import (
     Repository,
     Distribution,
 )
+
+from pulpcore.plugin.util import get_domain_pk
+from .utils import urlpath_sanitize
 
 logger = getLogger(__name__)
 
@@ -42,6 +49,7 @@ class Package(Content):
 
     name = models.CharField(max_length=214)
     version = models.CharField(max_length=16)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @property
     def relative_path(self):
@@ -52,7 +60,7 @@ class Package(Content):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = ("name", "version")
+        unique_together = ("name", "version", "_pulp_domain")
 
 
 class NpmRemote(Remote):
@@ -93,3 +101,55 @@ class NpmDistribution(Distribution):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+
+    def content_handler(self, path):
+        data = {}
+
+        repository_version = self.repository_version
+        if not repository_version:
+            repository_version = self.repository.latest_version()
+
+        content = repository_version.content
+        packages = Package.objects.filter(name=path, pk__in=content)
+
+        if not packages:
+            return None
+
+        data["name"] = path
+        data["versions"] = {}
+        versions = []
+
+        if settings.DOMAIN_ENABLED:
+            prefix_url = "{}/".format(
+                urlpath_sanitize(
+                    settings.CONTENT_ORIGIN,
+                    settings.CONTENT_PATH_PREFIX,
+                    self.pulp_domain.name,
+                    self.base_path,
+                )
+            )
+        else:
+            prefix_url = "{}/".format(
+                urlpath_sanitize(
+                    settings.CONTENT_ORIGIN,
+                    settings.CONTENT_PATH_PREFIX,
+                    self.base_path,
+                )
+            )
+
+        for package in packages:
+            tarball_url = f"{prefix_url}{package.relative_path.split('/')[-1]}"
+
+            version = {
+                package.version: {
+                    "_id": f"{package.name}@{package.version}",
+                    "dist": {"tarball": tarball_url},
+                }
+            }
+            versions.append(package.version)
+            data["versions"].update(version)
+
+        data["dist-tags"] = {"latest": max(versions)}
+
+        serialized_data = json.dumps(data)
+        return Response(body=serialized_data)

@@ -2,29 +2,12 @@
 """Constants for Pulp Npm plugin tests."""
 from urllib.parse import urljoin
 
-from pulp_smash.constants import PULP_FIXTURES_BASE_URL
-from pulp_smash.pulp3.constants import (
-    BASE_DISTRIBUTION_PATH,
-    BASE_REMOTE_PATH,
-    BASE_REPO_PATH,
-    BASE_CONTENT_PATH,
-)
+PULP_FIXTURES_BASE_URL = "https://fixtures.pulpproject.org/"
 
 # FIXME: list any download policies supported by your plugin type here.
-# If your plugin supports all download policies, you can import this
-# from pulp_smash.pulp3.constants instead.
-# DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
-DOWNLOAD_POLICIES = ["immediate"]
+DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
 
 NPM_CONTENT_NAME = "npm.package"
-
-NPM_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, "npm/npm/")
-
-NPM_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "npm/packages/")
-
-NPM_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "npm/npm/")
-
-NPM_REPO_PATH = urljoin(BASE_REPO_PATH, "npm/npm/")
 
 NPM_FIXTURE_URL = "https://registry.npmjs.org/"
 """The URL to a npm repository."""

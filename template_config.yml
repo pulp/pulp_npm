@@ -40,10 +40,14 @@ pulp_env_azure: {}
 pulp_env_gcp: {}
 pulp_env_s3: {}
 pulp_scheme: https
-pulp_settings: null
-pulp_settings_azure: null
-pulp_settings_gcp: null
-pulp_settings_s3: null
+pulp_settings:
+  orphan_protection_time: 0
+pulp_settings_azure:
+  domain_enabled: true
+pulp_settings_gcp:
+  domain_enabled: true
+pulp_settings_s3:
+  domain_enabled: true
 pydocstyle: false
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
@@ -63,4 +67,3 @@ test_reroute: true
 test_s3: true
 test_storages_compat_layer: false
 use_issue_template: true
-

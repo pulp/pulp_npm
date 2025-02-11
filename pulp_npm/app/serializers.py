@@ -1,19 +1,8 @@
-"""
-Check `Plugin Writer's Guide`_ for more details.
-
-.. _Plugin Writer's Guide:
-    http://docs.pulpproject.org/en/3.0/nightly/plugins/plugin-writer/index.html
-"""
-
-from gettext import gettext as _
-
-from django.conf import settings
 from rest_framework import serializers
 
 from pulpcore.plugin import models as core_models
 from pulpcore.plugin import serializers as platform
 
-from .utils import pulp_npm_content_path
 from . import models
 
 
@@ -79,7 +68,7 @@ class NpmRemoteSerializer(platform.RemoteSerializer):
         help_text="The policy to use when downloading content. The possible values include: "
         "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
         choices=core_models.Remote.POLICY_CHOICES,
-        default=core_models.Remote.IMMEDIATE,
+        required=False,
     )
 
     class Meta:
@@ -106,31 +95,10 @@ class NpmRepositorySerializer(platform.RepositorySerializer):
         model = models.NpmRepository
 
 
-class NpmBaseURLField(serializers.CharField):
-    """
-    Field for the base_url field pointing to the npm content app.
-    """
-
-    def to_representation(self, value):
-        """
-        Field representation.
-        """
-        base_path = value
-        origin = settings.CONTENT_ORIGIN
-        prefix = pulp_npm_content_path()
-        return "/".join((origin.strip("/"), prefix.strip("/"), base_path.lstrip("/")))
-
-
 class NpmDistributionSerializer(platform.DistributionSerializer):
     """
     Serializer for NPM Distributions.
     """
-
-    base_url = NpmBaseURLField(
-        source="base_path",
-        read_only=True,
-        help_text=_("The URL for accessing the universe API as defined by this distribution."),
-    )
 
     class Meta:
         fields = platform.DistributionSerializer.Meta.fields

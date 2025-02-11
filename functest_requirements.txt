@@ -1,4 +1,4 @@
-git+https://github.com/pulp/pulp-smash.git#egg=pulp-smash
 pytest<8
 pytest-xdist
 pytest-timeout
+pytest-custom_exit_code

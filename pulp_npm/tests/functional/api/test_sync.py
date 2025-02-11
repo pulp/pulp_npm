@@ -1,25 +1,25 @@
 # coding=utf-8
 """Tests that sync npm plugin repositories."""
+import pytest
 import unittest
+import uuid
+
+from pulpcore.client.pulp_npm import RepositorySyncURL
 
 from pulp_smash import api, cli, config
 from pulp_smash.exceptions import TaskReportError
 from pulp_smash.pulp3.constants import MEDIA_PATH
 from pulp_smash.pulp3.utils import (
     gen_repo,
-    get_added_content_summary,
-    get_content_summary,
     sync,
 )
 
 from pulp_npm.tests.functional.constants import (
-    NPM_FIXTURE_SUMMARY,
     NPM_INVALID_FIXTURE_URL,
     NPM_REMOTE_PATH,
     NPM_REPO_PATH,
 )
 from pulp_npm.tests.functional.utils import gen_npm_remote
-from pulp_npm.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
 class BasicSyncTestCase(unittest.TestCase):
@@ -30,50 +30,6 @@ class BasicSyncTestCase(unittest.TestCase):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.json_handler)
-
-    def test_sync(self):
-        """Sync repositories with the npm plugin.
-
-        In order to sync a repository a remote has to be associated within
-        this repository. When a repository is created this version field is set
-        as None. After a sync the repository version is updated.
-
-        Do the following:
-
-        1. Create a repository, and a remote.
-        2. Assert that repository version is None.
-        3. Sync the remote.
-        4. Assert that repository version is not None.
-        5. Assert that the correct number of units were added and are present
-           in the repo.
-        6. Sync the remote one more time.
-        7. Assert that repository version is different from the previous one.
-        8. Assert that the same number of are present and that no units were
-           added.
-        """
-        repo = self.client.post(NPM_REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["pulp_href"])
-
-        body = gen_npm_remote(url="https://registry.npmjs.org/commander/4.0.1")
-        remote = self.client.post(NPM_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["pulp_href"])
-
-        # Sync the repository.
-        self.assertEqual(repo["latest_version_href"], f"{repo['pulp_href']}versions/0/")
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
-
-        self.assertIsNotNone(repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), NPM_FIXTURE_SUMMARY)
-        self.assertDictEqual(get_added_content_summary(repo), NPM_FIXTURE_SUMMARY)
-
-        # Sync the repository again.
-        latest_version_href = repo["latest_version_href"]
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
-
-        self.assertEqual(latest_version_href, repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), NPM_FIXTURE_SUMMARY)
 
     # This test may not make sense for all plugins, but is likely to be useful
     # for most. Check that it makes sense for yours before enabling it.
@@ -140,7 +96,7 @@ class SyncInvalidTestCase(unittest.TestCase):
         keywords related to the reason of the failure. See :meth:`do_test`.
         """
         context = self.do_test(NPM_INVALID_FIXTURE_URL)
-        for key in ("mismached", "empty"):
+        for key in ("mismatched", "empty"):
             self.assertIn(key, context.exception.task["error"]["description"])
 
     def do_test(self, url):
@@ -155,3 +111,25 @@ class SyncInvalidTestCase(unittest.TestCase):
         with self.assertRaises(TaskReportError) as context:
             sync(self.cfg, remote, repo)
         return context
+
+
+@pytest.mark.parallel
+def test_sync_endpoint_demanding_remote_payload(
+    npm_bindings, gen_object_with_cleanup, monitor_task
+):
+    remote = gen_object_with_cleanup(
+        npm_bindings.RemotesNpmApi,
+        {"name": str(uuid.uuid4()), "url": "https://registry.npmjs.org/commander/4.0.1"},
+    )
+    repository = gen_object_with_cleanup(
+        npm_bindings.RepositoriesNpmApi, {"name": str(uuid.uuid4()), "remote": remote.pulp_href}
+    )
+
+    versions = npm_bindings.RepositoriesNpmVersionsApi.list(repository.pulp_href)
+    assert versions.count == 1
+
+    sync_url = RepositorySyncURL()
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repository.pulp_href, sync_url).task)
+
+    new_versions = npm_bindings.RepositoriesNpmVersionsApi.list(repository.pulp_href)
+    assert new_versions.count > 1

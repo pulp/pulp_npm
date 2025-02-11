@@ -58,7 +58,7 @@ class PackageViewSet(core.SingleArtifactContentUploadViewSet):
         """
         Perform bookkeeping when saving Content.
 
-        "Artifacts" need to be popped off and saved indpendently, as they are not actually part
+        "Artifacts" need to be popped off and saved independently, as they are not actually part
         of the Content model.
         """
         raise NotImplementedError("FIXME")
@@ -146,9 +146,11 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
         Dispatches a sync task.
         """
         repository = self.get_object()
-        serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
+        serializer = RepositorySyncURLSerializer(
+            data=request.data, context={"request": request, "repository_pk": pk}
+        )
         serializer.is_valid(raise_exception=True)
-        remote = serializer.validated_data.get("remote")
+        remote = serializer.validated_data.get("remote", repository.remote)
 
         result = dispatch(
             tasks.synchronize,

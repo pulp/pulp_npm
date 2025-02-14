@@ -1,1 +1,0 @@
-Fixes the missing REMOTE_TYPES property of the NpmRepository class.

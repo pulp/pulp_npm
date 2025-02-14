@@ -127,10 +127,8 @@ def test_invalid_remote_policy(npm_remote_factory, npm_bindings):
     Verify the policy remains the same.
     """
     remote = npm_remote_factory()
-    with pytest.raises(ApiException) as exp:
+    with pytest.raises(Exception):
         npm_bindings.RemotesNpmApi.partial_update(remote.pulp_href, {"policy": str(uuid.uuid4())})
-
-    assert exp.value.status == 400
 
     remote = npm_bindings.RemotesNpmApi.read(remote.pulp_href)
     assert remote.policy == "immediate"

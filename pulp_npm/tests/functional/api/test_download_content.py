@@ -9,9 +9,7 @@ from aiohttp.client_exceptions import ClientResponseError
 
 from pulpcore.client.pulp_npm import RepositorySyncURL
 
-from pulp_npm.tests.functional.constants import (
-    NPM_FIXTURE_URL,
-)
+from pulp_npm.tests.functional.constants import NPM_FIXTURE_URL
 
 
 @pytest.mark.parallel

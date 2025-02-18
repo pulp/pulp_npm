@@ -1,7 +1,8 @@
+from gettext import gettext as _
 from rest_framework import serializers
 
 from pulpcore.plugin import models as core_models
-from pulpcore.plugin import serializers as platform
+from pulpcore.plugin import serializers as core_serializers
 
 from . import models
 
@@ -12,7 +13,7 @@ from . import models
 # If you want create content through upload, use "SingleArtifactContentUploadSerializer"
 # If you change this, make sure to do so on "fields" below, also.
 # Make sure your choice here matches up with the create() method of your viewset.
-class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
+class PackageSerializer(core_serializers.SingleArtifactContentUploadSerializer):
     """
     A Serializer for Package.
 
@@ -26,7 +27,7 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
     field3 = serializers.CharField()
 
     class Meta:
-        fields = platform.SingleArtifactContentSerializer.Meta.fields + (
+        fields = core_serializers.SingleArtifactContentSerializer.Meta.fields + (
             'field1', 'field2', 'field3'
         )
         model = models.Package
@@ -37,7 +38,7 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
     relative_path = serializers.CharField()
 
     class Meta:
-        fields = platform.SingleArtifactContentUploadSerializer.Meta.fields + (
+        fields = core_serializers.SingleArtifactContentUploadSerializer.Meta.fields + (
             "name",
             "version",
             "relative_path",
@@ -45,7 +46,7 @@ class PackageSerializer(platform.SingleArtifactContentUploadSerializer):
         model = models.Package
 
 
-class NpmRemoteSerializer(platform.RemoteSerializer):
+class NpmRemoteSerializer(core_serializers.RemoteSerializer):
     """
     A Serializer for NpmRemote.
 
@@ -56,9 +57,9 @@ class NpmRemoteSerializer(platform.RemoteSerializer):
     For example::
 
     class Meta:
-        validators = platform.RemoteSerializer.Meta.validators + [myValidator1, myValidator2]
+        validators = core_serializers.RemoteSerializer.Meta.validators + [myValidator1, ...]
 
-    By default the 'policy' field in platform.RemoteSerializer only validates the choice
+    By default the 'policy' field in core_serializers.RemoteSerializer only validates the choice
     'immediate'. To add on-demand support for more 'policy' options, e.g. 'streamed' or 'on_demand',
     re-define the 'policy' option as follows::
 
@@ -72,11 +73,11 @@ class NpmRemoteSerializer(platform.RemoteSerializer):
     )
 
     class Meta:
-        fields = platform.RemoteSerializer.Meta.fields
+        fields = core_serializers.RemoteSerializer.Meta.fields
         model = models.NpmRemote
 
 
-class NpmRepositorySerializer(platform.RepositorySerializer):
+class NpmRepositorySerializer(core_serializers.RepositorySerializer):
     """
     A Serializer for NpmRepository.
 
@@ -87,19 +88,27 @@ class NpmRepositorySerializer(platform.RepositorySerializer):
     For example::
 
     class Meta:
-        validators = platform.RepositorySerializer.Meta.validators + [myValidator1, myValidator2]
+        validators = core_serializers.RepositorySerializer.Meta.validators + [myValidator1, ...]
     """
 
     class Meta:
-        fields = platform.RepositorySerializer.Meta.fields
+        fields = core_serializers.RepositorySerializer.Meta.fields
         model = models.NpmRepository
 
 
-class NpmDistributionSerializer(platform.DistributionSerializer):
+class NpmDistributionSerializer(core_serializers.DistributionSerializer):
     """
     Serializer for NPM Distributions.
     """
 
+    remote = core_serializers.DetailRelatedField(
+        required=False,
+        help_text=_("Remote that can be used to fetch content when using pull-through caching."),
+        view_name_pattern=r"remotes(-.*/.*)?-detail",
+        queryset=core_models.Remote.objects.all(),
+        allow_null=True,
+    )
+
     class Meta:
-        fields = platform.DistributionSerializer.Meta.fields
+        fields = core_serializers.DistributionSerializer.Meta.fields + ("remote",)
         model = models.NpmDistribution

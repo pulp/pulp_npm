@@ -1,10 +1,3 @@
-"""
-Check `Plugin Writer's Guide`_ for more details.
-
-.. _Plugin Writer's Guide:
-    http://docs.pulpproject.org/en/3.0/nightly/plugins/plugin-writer/index.html
-"""
-
 import json
 from logging import getLogger
 
@@ -21,7 +14,7 @@ from pulpcore.plugin.models import (
 )
 
 from pulpcore.plugin.util import get_domain_pk
-from .utils import urlpath_sanitize
+from .utils import urlpath_sanitize, extract_package_info
 
 logger = getLogger(__name__)
 
@@ -32,16 +25,6 @@ class Package(Content):
 
     Define fields you need for your new content type and
     specify uniqueness constraint to identify unit of this type.
-
-    For example::
-
-        field1 = models.TextField()
-        field2 = models.IntegerField()
-        field3 = models.CharField()
-
-        class Meta:
-            default_related_name = "%(app_label)s_%(model_name)s"
-            unique_together = (field1, field2)
     """
 
     TYPE = "package"
@@ -58,6 +41,12 @@ class Package(Content):
         """
         return f"{self.name}/-/{self.name}-{self.version}.tgz"
 
+    @staticmethod
+    def init_from_artifact_and_relative_path(artifact, relative_path):
+        name, version = extract_package_info(relative_path)
+
+        return Package(name=name, version=version)
+
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = ("name", "version", "_pulp_domain")
@@ -71,6 +60,14 @@ class NpmRemote(Remote):
     """
 
     TYPE = "npm"
+
+    def get_remote_artifact_content_type(self, relative_path=None):
+        name, version = extract_package_info(relative_path)
+
+        if name and version:
+            return Package
+
+        return None
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -104,6 +101,9 @@ class NpmDistribution(Distribution):
 
     def content_handler(self, path):
         data = {}
+
+        if not self.repository:
+            return None
 
         repository_version = self.repository_version
         if not repository_version:

@@ -1,3 +1,6 @@
+import re
+
+
 def urlpath_sanitize(*args):
     """
     Join an arbitrary number of strings into a /-separated path.
@@ -15,3 +18,22 @@ def urlpath_sanitize(*args):
         if stripped:
             segments.append(stripped)
     return "/".join(segments)
+
+
+def extract_package_info(relative_path):
+    """
+    Tries to extract the name and the version of a package
+    from the relative path string.
+
+    Args:
+        The relative_path string. "package/-/package-version.tgz"
+    """
+    pattern = r"^(?P<name>@?[^/]+(?:/[^/]+)?)/-/(?P<base_name>[^/]+)-(?P<version>[\d.]+)\.tgz$"
+    match = re.match(pattern, relative_path)
+
+    if match:
+        name = match.group("name")
+        version = match.group("version")
+        return name, version
+    else:
+        return None, None

@@ -52,7 +52,7 @@ curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/repositories/npm/npm/9b19ceb7-11e1-
 === "Response"
 ```json
 {
-    "pulp_href": "http://localhost:24817/pulp/api/v3/tasks/3896447a-2799-4818-a3e5-df8552aeb903/",
+    "pulp_href": "http://localhost:24817/pulp/{domain}/api/v3/tasks/3896447a-2799-4818-a3e5-df8552aeb903/",
     "task_id": "3896447a-2799-4818-a3e5-df8552aeb903"
 }
 ```

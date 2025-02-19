@@ -9,7 +9,7 @@
 
 A Pulp plugin to support npm packages.
 
-For more information, please see the [documentation](docs/index.rst) or the [Pulp project page](https://pulpproject.org/).
+For more information, please see the [documentation](docs/index.md) or the [Pulp project page](https://pulpproject.org/).
 
 ## About Pulp
 Pulp is a platform for managing repositories of content, such as software

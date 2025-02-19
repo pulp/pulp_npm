@@ -3,7 +3,7 @@
 <!--toc:start-->
 - [pulp-npm](#pulp-npm)
   - [About Pulp](#about-pulp)
-  - [About pulp_npm](#about-pulpnpm)
+  - [About pulp_npm](#about-pulp_npm)
   - [License](#license)
 <!--toc:end-->
 

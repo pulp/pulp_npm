@@ -27,7 +27,7 @@ at `/pulp/content/{domain}/{distribution.base_path}`:
 
 === "Create a distribution"
 ```bash
-curl -X POST $BASE_ADDR/pulp/api/v3/distributions/npm/npm/ -d '{"name": "baz", "base_path": "foo", "publication": "$BASE_ADDR/publications/5fcb3a98-1bd1-445f-af94-801a1d563b9f/"}' -H 'Content-Type: application/json'
+curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/distributions/npm/npm/ -d '{"name": "baz", "base_path": "foo", "publication": "$BASE_ADDR/publications/5fcb3a98-1bd1-445f-af94-801a1d563b9f/"}' -H 'Content-Type: application/json'
 ```
 
 === "Response"

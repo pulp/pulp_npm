@@ -27,7 +27,7 @@ Creating a remote object informs Pulp about an external content source.
 
 === "Create remote bar"
     ```bash
-    curl -X POST $BASE_ADDR/pulp/pulp/api/v3/remotes/npm/npm/ -d '{"name": "bar", "url": "http://some.url/somewhere/"}' -H 'Content-Type: application/json'
+    curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/remotes/npm/npm/ -d '{"name": "bar", "url": "http://some.url/somewhere/"}' -H 'Content-Type: application/json'
 
     ```
 

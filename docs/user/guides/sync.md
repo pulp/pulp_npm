@@ -8,7 +8,7 @@ their repository.
 Start by creating a new repository named "foo":
 === "Create repository foo"
     ```bash
-    curl -X POST $BASE_ADDR/pulp/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -H 'Content-Type: application/json'
+    curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -H 'Content-Type: application/json'
 
     ```
 

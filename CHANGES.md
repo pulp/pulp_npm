@@ -8,6 +8,19 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.2.0 (2025-02-20) {: #0.2.0 }
+
+#### Features {: #0.2.0-feature }
+
+- Added pull-through cache feature.
+  [#278](https://github.com/pulp/pulp_npm/issues/278)
+
+#### Misc {: #0.2.0-misc }
+
+- [#128](https://github.com/pulp/pulp_npm/issues/128)
+
+---
+
 ## 0.1.0a4 (2022-06-27)
 
 ### Bugfixes

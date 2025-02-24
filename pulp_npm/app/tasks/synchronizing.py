@@ -2,7 +2,8 @@ from gettext import gettext as _
 import json
 import logging
 
-from packaging.version import parse, Version, InvalidVersion
+from collections import OrderedDict
+from packaging.version import parse, InvalidVersion
 from urllib.parse import urlparse
 
 from pulpcore.plugin.models import Artifact, Remote, Repository
@@ -117,15 +118,27 @@ class NpmFirstStage(Stage):
 
         if versions := data.get("versions"):
             packages = []
-            latest_version = data[0]["dist-tags"]["latest"]
-            # MAX_NUMBER_OF_VERSIONS = 15
-            # versions = [parse_package_version(version) for version in versions.keys()]
-            # versions = [version for version in versions if version is not None]
-            # versions = sorted(versions, reverse=True)
-            # versions_to_download = [key for key in versions if key <= latest_version][:MAX_NUMBER_OF_VERSIONS]
-            # for version in versions_to_download:
-            #     packages.append(data[0]["versions"][str(version)])
-            packages.append(data["versions"][latest_version])
+            latest_version = parse(data["dist-tags"]["latest"])
+            MAX_VERSIONS = 15
+            # The packaging.parse module have some difficulties with some versions.
+            versions = {
+                version: parse_package_version(version)
+                for version in versions.keys()
+                if parse_package_version(version) is not None
+            }
+            # Could be there packages with higher versions than the latest stable one.
+            versions = {
+                version: parsed_version
+                for version, parsed_version in versions.items()
+                if parsed_version <= latest_version
+            }
+            versions = OrderedDict(
+                sorted(versions.items(), key=lambda version: version[1], reverse=True)
+            )
+
+            versions_to_download = OrderedDict(list(versions.items())[:MAX_VERSIONS])
+            for version in versions_to_download.keys():
+                packages.append(data["versions"][str(version)])
 
             dependencies = []
             for package in packages:

@@ -71,3 +71,17 @@ def test_invalid_npm_content(
     assert exp.value.task.state == "failed"
     assert "mismatched" in exp.value.task.error["description"]
     assert "empty" in exp.value.task.error["description"]
+
+
+@pytest.mark.parallel
+def test_sync_multiple_package_versions(
+    npm_bindings, npm_remote_factory, npm_repository_factory, monitor_task
+):
+    """
+    Sync a repository with the latest 15 versions of a package and its dependencies.
+    """
+    remote = npm_remote_factory(url="https://registry.npmjs.com/vue")
+    repository = npm_repository_factory(remote=remote.pulp_href)
+    sync_payload = RepositorySyncURL(remote=remote.pulp_href)
+
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repository.pulp_href, sync_payload).task)

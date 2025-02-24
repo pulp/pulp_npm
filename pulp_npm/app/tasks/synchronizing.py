@@ -2,6 +2,9 @@ from gettext import gettext as _
 import json
 import logging
 
+from packaging.version import parse, Version, InvalidVersion
+from urllib.parse import urlparse
+
 from pulpcore.plugin.models import Artifact, Remote, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
@@ -73,31 +76,66 @@ class NpmFirstStage(Stage):
         """
         downloader = self.remote.get_downloader(url=self.remote.url)
         result = await downloader.run()
-        data = [self.get_json_data(result.path)]
-        dependencies = data[0].get("dependencies")
-        to_download = []
-        if dependencies:
-            to_download.extend(dependencies.items())
-            downloaded = []
-            while to_download:
-                next_batch = []
-                for name, version in to_download:
-                    new_url = self.remote.url.replace(data[0]["name"], name)
-                    new_url = new_url.replace(data[0]["version"], version.replace("^", ""))
-                    downloader = self.remote.get_downloader(url=new_url)
+        data = self.get_json_data(result.path)
+
+        def parse_package_version(version):
+            try:
+                return parse(version)
+            except InvalidVersion:
+                return None
+
+        async def extract_package_dependencies(package, previous_packages=None):
+            if previous_packages is None:
+                previous_packages = set()
+
+            package_id = f"{package['name']}-{package['version']}"
+
+            if package_id in previous_packages:
+                return []
+
+            previous_packages.add(package_id)
+
+            flat_dependencies = []
+            if dependencies := package.get("dependencies"):
+                for name, version in dependencies.items():
+                    url = self.remote.url
+                    url_parsed = urlparse(url)
+                    registry_url = f"{url_parsed.scheme}://{url_parsed.netloc}"
+                    if name not in url_parsed.path:
+                        version_normalized = version.replace("^", "")
+                        package_url = f"{registry_url}/{name}/{version_normalized}"
+
+                    downloader = self.remote.get_downloader(url=package_url)
                     result = await downloader.run()
-                    new_data = self.get_json_data(result.path)
-                    data.append(new_data)
-                    next_batch.extend(new_data.get("dependencies", {}).items())
-                    downloaded.append((name, version))
+                    metadata = self.get_json_data(result.path)
+                    flat_dependencies.append(metadata)
+                    flat_dependencies.extend(
+                        await extract_package_dependencies(metadata, previous_packages)
+                    )
 
-                to_download.extend(next_batch)
+            return flat_dependencies
 
-                for dependency in downloaded:
-                    if dependency in to_download:
-                        to_download.remove(dependency)
+        if versions := data.get("versions"):
+            packages = []
+            latest_version = data[0]["dist-tags"]["latest"]
+            # MAX_NUMBER_OF_VERSIONS = 15
+            # versions = [parse_package_version(version) for version in versions.keys()]
+            # versions = [version for version in versions if version is not None]
+            # versions = sorted(versions, reverse=True)
+            # versions_to_download = [key for key in versions if key <= latest_version][:MAX_NUMBER_OF_VERSIONS]
+            # for version in versions_to_download:
+            #     packages.append(data[0]["versions"][str(version)])
+            packages.append(data["versions"][latest_version])
 
-        for pkg in data:
+            dependencies = []
+            for package in packages:
+                dependencies.extend(await extract_package_dependencies(package))
+
+            packages.extend(dependencies)
+        else:
+            packages = [data]
+
+        for pkg in packages:
             package = Package(name=pkg["name"], version=pkg["version"])
             artifact = Artifact()  # make Artifact in memory-only
             url = pkg["dist"]["tarball"]

@@ -6,17 +6,9 @@ their repository.
 ## Create a Repository
 
 Start by creating a new repository named "foo":
-=== "Create repository foo"
-<<<<<<< Updated upstream
-    ```bash
-    curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -H 'Content-Type: application/json'
-
-    ```
-=======
 ```bash
 curl -X POST $BASE_ADDR/pulp/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -H 'Content-Type: application/json'
 ```
->>>>>>> Stashed changes
 
 === "Response"
 ```json
@@ -32,16 +24,9 @@ curl -X POST $BASE_ADDR/pulp/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -
 Creating a remote object informs Pulp about an external content source.
 
 === "Create remote bar"
-<<<<<<< Updated upstream
-    ```bash
-    curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/remotes/npm/npm/ -d '{"name": "bar", "url": "http://some.url/somewhere/"}' -H 'Content-Type: application/json'
-
-    ```
-=======
 ```bash
 curl -X POST $BASE_ADDR/pulp/pulp/api/v3/remotes/npm/npm/ -d '{"name": "bar", "url": "http://some.url/somewhere/"}' -H 'Content-Type: application/json'
 ```
->>>>>>> Stashed changes
 
 === "Response"
 ```json

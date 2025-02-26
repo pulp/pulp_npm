@@ -37,6 +37,48 @@ No significant changes.
 
 -   Download a package with its dependencies
     [#6004](https://pulp.plan.io/issues/6004)
+## 0.2.0 (2025-02-20) {: #0.2.0 }
+
+#### Features {: #0.2.0-feature }
+
+- Added pull-through cache feature.
+  [#278](https://github.com/pulp/pulp_npm/issues/278)
+
+#### Misc {: #0.2.0-misc }
+
+- [#128](https://github.com/pulp/pulp_npm/issues/128)
+
+---
+
+## 0.1.0a4 (2022-06-27)
+
+### Bugfixes
+
+-   Remove scheme from apache snippet
+    [#8574](https://pulp.plan.io/issues/8574)
+-   Adjusted the use of `dispatch` for pulpcore>=3.15. Also bumped the dependency.
+    [#9533](https://pulp.plan.io/issues/9533)
+
+---
+
+## 0.1.0a3 (2021-03-17)
+
+No significant changes.
+
+---
+
+## 0.1.0a2 (2020-11-25)
+
+No significant changes.
+
+---
+
+## 0.1.0a1 (2020-11-18)
+
+### Features
+
+-   Download a package with its dependencies
+    [#6004](https://pulp.plan.io/issues/6004)
 ## 0.1.0 (2025-02-14) {: #0.1.0 }
 
 #### Features {: #0.1.0-feature }

@@ -8,7 +8,7 @@ import pulpcore.app.util
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0126_remoteartifact_failed_at'),
+        ('core', '0101_add_domain'),
         ('npm', '0003_alter_npmdistribution_distribution_ptr_and_more'),
     ]
 

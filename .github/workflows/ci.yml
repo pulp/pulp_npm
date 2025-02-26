@@ -43,6 +43,9 @@ jobs:
         run: |
           .github/workflows/scripts/check_commit.sh
 
+  docs:
+    uses: "./.github/workflows/docs.yml"
+
   lint:
     uses: "./.github/workflows/lint.yml"
 
@@ -84,6 +87,7 @@ jobs:
       - "check-commits"
       - "lint"
       - "test"
+      - "docs"
     if: "always()"
     steps:
       - name: "Collect needed jobs results"

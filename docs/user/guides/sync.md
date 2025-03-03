@@ -7,7 +7,7 @@ their repository.
 
 Start by creating a new repository named "foo":
 ```bash
-curl -X POST $BASE_ADDR/pulp/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -H 'Content-Type: application/json'
+curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/repositories/npm/npm/ -d '{"name": "foo"}' -H 'Content-Type: application/json'
 ```
 
 === "Response"
@@ -25,7 +25,7 @@ Creating a remote object informs Pulp about an external content source.
 
 === "Create remote bar"
 ```bash
-curl -X POST $BASE_ADDR/pulp/pulp/api/v3/remotes/npm/npm/ -d '{"name": "bar", "url": "http://some.url/somewhere/"}' -H 'Content-Type: application/json'
+curl -X POST $BASE_ADDR/pulp/{domain}/api/v3/remotes/npm/npm/ -d '{"name": "bar", "url": "http://some.url/somewhere/"}' -H 'Content-Type: application/json'
 ```
 
 === "Response"

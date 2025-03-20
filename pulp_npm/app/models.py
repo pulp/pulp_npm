@@ -85,6 +85,8 @@ class NpmRepository(Repository):
     CONTENT_TYPES = [Package]
     REMOTE_TYPES = [NpmRemote]
 
+    PULL_THROUGH_SUPPORTED = True
+
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
 

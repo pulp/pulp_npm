@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.3.0 (2025-03-21) {: #0.3.0 }
+
+#### Features {: #0.3.0-feature }
+
+- Enabled adding pulp-through content to a associated repository.
+  [#299](https://github.com/pulp/pulp_npm/issues/299)
+
+#### Improved Documentation {: #0.3.0-doc }
+
+- Fixes the domain usage examples in the docs.
+  [#298](https://github.com/pulp/pulp_npm/issues/298)
+
+---
+
 ## 0.2.0 (2025-02-20) {: #0.2.0 }
 
 #### Features {: #0.2.0-feature }

@@ -28,6 +28,8 @@ def npm_repository_factory(npm_bindings, gen_object_with_cleanup):
         kwargs = {}
         if pulp_domain:
             kwargs["pulp_domain"] = pulp_domain
+        if remote:
+            body["remote"] = remote if isinstance(remote, str) else remote.pulp_href
         return gen_object_with_cleanup(npm_bindings.RepositoriesNpmApi, body, **kwargs)
 
     return _npm_repository_factory

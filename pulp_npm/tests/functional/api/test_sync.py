@@ -1,7 +1,6 @@
 # coding=utf-8
 """Tests that sync npm plugin repositories."""
 import pytest
-import uuid
 
 from pulpcore.client.pulp_npm import RepositorySyncURL
 
@@ -14,21 +13,15 @@ from pulp_npm.tests.functional.constants import (
 
 @pytest.mark.parallel
 def test_sync_endpoint_demanding_remote_payload(
-    npm_bindings, gen_object_with_cleanup, monitor_task
+    npm_bindings, npm_remote_factory, npm_repository_factory, monitor_task
 ):
-    remote = gen_object_with_cleanup(
-        npm_bindings.RemotesNpmApi,
-        {"name": str(uuid.uuid4()), "url": "https://registry.npmjs.org/commander/4.0.1"},
-    )
-    repository = gen_object_with_cleanup(
-        npm_bindings.RepositoriesNpmApi, {"name": str(uuid.uuid4()), "remote": remote.pulp_href}
-    )
+    remote = npm_remote_factory(url="https://registry.npmjs.org/commander/4.0.1")
+    repository = npm_repository_factory(remote=remote.pulp_href)
 
     versions = npm_bindings.RepositoriesNpmVersionsApi.list(repository.pulp_href)
     assert versions.count == 1
 
-    sync_url = RepositorySyncURL()
-    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repository.pulp_href, sync_url).task)
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repository.pulp_href, {}).task)
 
     new_versions = npm_bindings.RepositoriesNpmVersionsApi.list(repository.pulp_href)
     assert new_versions.count > 1

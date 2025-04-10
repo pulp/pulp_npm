@@ -57,9 +57,7 @@ def test_download_content(
 
     fixture_hash = hashlib.sha256(http_get(urljoin(NPM_FIXTURE_URL, unit_path))).hexdigest()
 
-    pulp_hash = hashlib.sha256(
-        http_get(urljoin(distribution.base_url, unit_path.split("/")[-1]))
-    ).hexdigest()
+    pulp_hash = hashlib.sha256(http_get(urljoin(distribution.base_url, unit_path))).hexdigest()
 
     assert fixture_hash == pulp_hash
 

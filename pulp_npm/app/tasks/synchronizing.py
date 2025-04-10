@@ -104,7 +104,7 @@ class NpmFirstStage(Stage):
             da = DeclarativeArtifact(
                 artifact=artifact,
                 url=url,
-                relative_path=url.split("/")[-1],
+                relative_path=f"{pkg['name']}/-/{url.split('/')[-1]}",
                 remote=self.remote,
                 deferred_download=self.deferred_download,
             )

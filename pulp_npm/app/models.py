@@ -112,12 +112,16 @@ class NpmDistribution(Distribution):
             repository_version = self.repository.latest_version()
 
         content = repository_version.content
-        packages = Package.objects.filter(name=path, pk__in=content)
+        name, version = extract_package_info(path)
+        if name and version:
+            return None
+
+        packages = Package.objects.filter(name=name, pk__in=content)
 
         if not packages:
             return None
 
-        data["name"] = path
+        data["name"] = name
         data["versions"] = {}
         versions = []
 
@@ -140,7 +144,7 @@ class NpmDistribution(Distribution):
             )
 
         for package in packages:
-            tarball_url = f"{prefix_url}{package.relative_path.split('/')[-1]}"
+            tarball_url = f"{prefix_url}{package.name}/-/{package.relative_path.split('/')[-1]}"
 
             version = {
                 package.version: {

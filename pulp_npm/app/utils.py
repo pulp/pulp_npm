@@ -28,7 +28,7 @@ def extract_package_info(relative_path):
     Args:
         The relative_path string. "package/-/package-version.tgz"
     """
-    pattern = r"^(?P<name>@?[^/]+(?:/[^/]+)?)/-/(?P<base_name>[^/]+)-(?P<version>[\d.]+)\.tgz$"
+    pattern = r"^(?P<name>@?[^/]+(?:/[^/]+)?)(?:/-/(?P<base_name>[^/]+)-(?P<version>[\d.]+)\.tgz)?$"
     match = re.match(pattern, relative_path)
 
     if match:

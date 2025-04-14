@@ -6,6 +6,6 @@ class PulpNpmPluginAppConfig(PulpPluginAppConfig):
 
     name = "pulp_npm.app"
     label = "npm"
-    version = "0.3.3"
+    version = "0.3.4.dev"
     python_package_name = "pulp-npm"
     domain_compatible = True

@@ -8,6 +8,15 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.3.3 (2025-04-14) {: #0.3.3 }
+
+#### Bugfixes {: #0.3.3-bugfix }
+
+- Fixes the name of the package when downloaded using pull-through cache.
+  [#315](https://github.com/pulp/pulp_npm/issues/315)
+
+---
+
 ## 0.3.2 (2025-03-28) {: #0.3.2 }
 
 #### Misc {: #0.3.2-misc }

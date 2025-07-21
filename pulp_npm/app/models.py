@@ -27,7 +27,7 @@ class Package(Content):
     specify uniqueness constraint to identify unit of this type.
     """
 
-    TYPE = "package"
+    TYPE = "npm"
     repo_key_fields = ("name", "version")
 
     name = models.CharField(max_length=214)

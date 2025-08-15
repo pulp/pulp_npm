@@ -8,6 +8,23 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.4.0 (2025-08-14) {: #0.4.0 }
+
+#### Bugfixes {: #0.4.0-bugfix }
+
+- Fixes the name of the package when downloaded using pull-through cache.
+  [#315](https://github.com/pulp/pulp_npm/issues/315)
+
+#### Deprecations and Removals {: #0.4.0-removal }
+
+- This release drops support for Python<3.11.
+
+#### Misc {: #0.4.0-misc }
+
+- 
+
+---
+
 ## 0.3.3 (2025-04-14) {: #0.3.3 }
 
 #### Bugfixes {: #0.3.3-bugfix }

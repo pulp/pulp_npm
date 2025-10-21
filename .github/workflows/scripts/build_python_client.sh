@@ -21,10 +21,10 @@ rm -rf "pulp_npm-client"
 ./gen-client.sh "../pulp_npm/npm-api.json" "npm" python "pulp_npm"
 
 pushd pulp_npm-client
-python setup.py sdist bdist_wheel --python-tag py3
+python -m build
 
 twine check "dist/pulp_npm_client-"*"-py3-none-any.whl"
-twine check "dist/pulp_npm-client-"*".tar.gz"
+twine check "dist/pulp_npm_client-"*".tar.gz"
 
 tar cvf "../../pulp_npm/npm-python-client.tar" ./dist
 

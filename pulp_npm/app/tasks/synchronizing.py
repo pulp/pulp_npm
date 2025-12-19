@@ -9,6 +9,7 @@ from pulpcore.plugin.stages import (
     DeclarativeVersion,
     Stage,
 )
+from pulpcore.plugin.serializers import RepositoryVersionSerializer
 
 from pulp_npm.app.models import Package, NpmRemote
 
@@ -40,7 +41,9 @@ def synchronize(remote_pk, repository_pk, mirror=False):
     # Interpret policy to download Artifacts or not
     deferred_download = remote.policy != Remote.IMMEDIATE
     first_stage = NpmFirstStage(remote, deferred_download)
-    return DeclarativeVersion(first_stage, repository, mirror=mirror).create()
+    repover = DeclarativeVersion(first_stage, repository, mirror=mirror).create()
+    repover_serialized = RepositoryVersionSerializer(instance=repover, context={"request": None})
+    return repover_serialized
 
 
 class NpmFirstStage(Stage):

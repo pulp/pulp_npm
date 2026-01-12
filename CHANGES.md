@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.5.0 (2026-01-12) {: #0.5.0 }
+
+#### Features {: #0.5.0-feature }
+
+- Bump pulpcore upperbound to <3.115.
+- Taught synchronize task to return full serialized object of their action.
+
+#### Bugfixes {: #0.5.0-bugfix }
+
+- Addressed the deprecation warning of non-serializable task results.
+  [#354](https://github.com/pulp/pulp_npm/issues/354)
+
+---
+
 ## 0.4.0 (2025-08-14) {: #0.4.0 }
 
 #### Bugfixes {: #0.4.0-bugfix }

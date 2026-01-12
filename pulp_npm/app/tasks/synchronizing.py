@@ -43,7 +43,7 @@ def synchronize(remote_pk, repository_pk, mirror=False):
     first_stage = NpmFirstStage(remote, deferred_download)
     repover = DeclarativeVersion(first_stage, repository, mirror=mirror).create()
     repover_serialized = RepositoryVersionSerializer(instance=repover, context={"request": None})
-    return repover_serialized
+    return repover_serialized.data
 
 
 class NpmFirstStage(Stage):

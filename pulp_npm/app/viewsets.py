@@ -16,7 +16,7 @@ from pulpcore.plugin.tasking import dispatch
 from . import models, serializers, tasks
 
 
-class PackageFilter(core.ContentFilter):
+class NpmPackageFilter(core.ContentFilter):
     """
     FilterSet for Package.
     """
@@ -26,72 +26,41 @@ class PackageFilter(core.ContentFilter):
         fields = {"name": ["exact", "in"]}
 
 
-class PackageViewSet(core.SingleArtifactContentUploadViewSet):
+class NpmPackageViewSet(core.SingleArtifactContentUploadViewSet):
     """
-    A ViewSet for Package.
+    A ViewSet for NpmPackage.
 
     Define endpoint name which will appear in the API endpoint for this content type.
     For example::
-        http://pulp.example.com/pulp/api/v3/content/npm/units/
+        http://pulp.example.com/pulp/api/v3/content/npm/packages/
 
-    Also specify queryset and serializer for Package.
+    Also specify queryset and serializer for NpmPackage.
     """
 
     endpoint_name = "packages"
     queryset = models.Package.objects.all()
-    serializer_class = serializers.PackageSerializer
-    filterset_class = PackageFilter
+    serializer_class = serializers.NpmPackageSerializer
+    filterset_class = NpmPackageFilter
 
-    @transaction.atomic
-    def create(self, request):
+    @extend_schema(
+        summary="Synchronous npm package upload",
+        request=serializers.NpmPackageUploadSerializer,
+        responses={201: serializers.NpmPackageSerializer},
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        serializer_class=serializers.NpmPackageUploadSerializer,
+    )
+    def upload(self, request):
         """
-        Perform bookkeeping when saving Content.
-
-        "Artifacts" need to be popped off and saved independently, as they are not actually part
-        of the Content model.
+        Create an npm package content unit synchronously.
         """
-        raise NotImplementedError("FIXME")
-        # This requires some choice. Depending on the properties of your content type - whether it
-        # can have zero, one, or many artifacts associated with it, and whether any properties of
-        # the artifact bleed into the content type (such as the digest), you may want to make
-        # those changes here.
-
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
-        # A single artifact per content, serializer subclasses SingleArtifactContentSerializer
-        # ======================================
-        # _artifact = serializer.validated_data.pop("_artifact")
-        # # you can save model fields directly, e.g. .save(digest=_artifact.sha256)
-        # content = serializer.save()
-        #
-        # if content.pk:
-        #     ContentArtifact.objects.create(
-        #         artifact=artifact,
-        #         content=content,
-        #         relative_path= ??
-        #     )
-        # =======================================
-
-        # Many artifacts per content, serializer subclasses MultipleArtifactContentSerializer
-        # =======================================
-        # _artifacts = serializer.validated_data.pop("_artifacts")
-        # content = serializer.save()
-        #
-        # if content.pk:
-        #   # _artifacts is a dictionary of {"relative_path": "artifact"}
-        #   for relative_path, artifact in _artifacts.items():
-        #       ContentArtifact.objects.create(
-        #           artifact=artifact,
-        #           content=content,
-        #           relative_path=relative_path
-        #       )
-        # ========================================
-
-        # No artifacts, serializer subclasses NoArtifactContentSerialier
-        # ========================================
-        # content = serializer.save()
-        # ========================================
+        with transaction.atomic():
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -101,7 +70,7 @@ class NpmRemoteViewSet(core.RemoteViewSet):
     """
     A ViewSet for NpmRemote.
 
-    Similar to the PackageViewSet above, define endpoint_name,
+    Similar to the NpmPackageViewSet above, define endpoint_name,
     queryset and serializer, at a minimum.
     """
 
@@ -114,7 +83,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
     """
     A ViewSet for NpmRepository.
 
-    Similar to the PackageViewSet above, define endpoint_name,
+    Similar to the NpmPackageViewSet above, define endpoint_name,
     queryset and serializer, at a minimum.
     """
 

@@ -5,9 +5,9 @@ import django.db.models.deletion
 
 
 def migrate_data_from_old_model_to_new_model_up(apps, schema_editor):
-    """ Move objects from NpmDistribution to NewNpmDistribution."""
-    NpmDistribution = apps.get_model('npm', 'NpmDistribution')
-    NewNpmDistribution = apps.get_model('npm', 'NewNpmDistribution')
+    """Move objects from NpmDistribution to NewNpmDistribution."""
+    NpmDistribution = apps.get_model("npm", "NpmDistribution")
+    NewNpmDistribution = apps.get_model("npm", "NewNpmDistribution")
     for npm_distribution in NpmDistribution.objects.all():
         with transaction.atomic():
             NewNpmDistribution(
@@ -20,15 +20,15 @@ def migrate_data_from_old_model_to_new_model_up(apps, schema_editor):
                 content_guard=npm_distribution.content_guard,
                 remote=npm_distribution.remote,
                 repository_version=npm_distribution.repository_version,
-                repository=npm_distribution.repository
+                repository=npm_distribution.repository,
             ).save()
             npm_distribution.delete()
 
 
 def migrate_data_from_old_model_to_new_model_down(apps, schema_editor):
-    """ Move objects from NewNpmDistribution to NpmDistribution."""
-    NpmDistribution = apps.get_model('npm', 'NpmDistribution')
-    NewNpmDistribution = apps.get_model('npm', 'NewNpmDistribution')
+    """Move objects from NewNpmDistribution to NpmDistribution."""
+    NpmDistribution = apps.get_model("npm", "NpmDistribution")
+    NewNpmDistribution = apps.get_model("npm", "NewNpmDistribution")
     for npm_distribution in NewNpmDistribution.objects.all():
         with transaction.atomic():
             NpmDistribution(
@@ -41,7 +41,7 @@ def migrate_data_from_old_model_to_new_model_down(apps, schema_editor):
                 content_guard=npm_distribution.content_guard,
                 remote=npm_distribution.remote,
                 repository_version=npm_distribution.repository_version,
-                repository=npm_distribution.repository
+                repository=npm_distribution.repository,
             ).save()
             npm_distribution.delete()
 
@@ -50,19 +50,30 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('npm', '0001_initial'),
+        ("npm", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NewNpmDistribution',
+            name="NewNpmDistribution",
             fields=[
-                ('distribution_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, related_name='npm_npmdistribution', serialize=False, to='core.Distribution')),
+                (
+                    "distribution_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        related_name="npm_npmdistribution",
+                        serialize=False,
+                        to="core.Distribution",
+                    ),
+                ),
             ],
             options={
-                'default_related_name': '%(app_label)s_%(model_name)s',
+                "default_related_name": "%(app_label)s_%(model_name)s",
             },
-            bases=('core.distribution',),
+            bases=("core.distribution",),
         ),
         migrations.RunPython(
             code=migrate_data_from_old_model_to_new_model_up,
@@ -70,10 +81,10 @@ class Migration(migrations.Migration):
             elidable=True,
         ),
         migrations.DeleteModel(
-            name='NpmDistribution',
+            name="NpmDistribution",
         ),
         migrations.RenameModel(
-            old_name='NewNpmDistribution',
-            new_name='NpmDistribution',
+            old_name="NewNpmDistribution",
+            new_name="NpmDistribution",
         ),
     ]

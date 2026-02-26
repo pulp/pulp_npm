@@ -13,7 +13,6 @@ from pulpcore.plugin.serializers import RepositoryVersionSerializer
 
 from pulp_npm.app.models import Package, NpmRemote
 
-
 log = logging.getLogger(__name__)
 
 

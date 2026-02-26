@@ -1,5 +1,6 @@
 # coding=utf-8
 """Tests that sync npm plugin repositories."""
+
 import pytest
 
 from pulpcore.client.pulp_npm import RepositorySyncURL

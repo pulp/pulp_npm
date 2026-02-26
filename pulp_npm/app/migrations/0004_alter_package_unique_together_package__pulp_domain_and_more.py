@@ -8,22 +8,26 @@ import pulpcore.app.util
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0101_add_domain'),
-        ('npm', '0003_alter_npmdistribution_distribution_ptr_and_more'),
+        ("core", "0101_add_domain"),
+        ("npm", "0003_alter_npmdistribution_distribution_ptr_and_more"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='package',
+            name="package",
             unique_together=set(),
         ),
         migrations.AddField(
-            model_name='package',
-            name='_pulp_domain',
-            field=models.ForeignKey(default=pulpcore.app.util.get_domain_pk, on_delete=django.db.models.deletion.PROTECT, to='core.domain'),
+            model_name="package",
+            name="_pulp_domain",
+            field=models.ForeignKey(
+                default=pulpcore.app.util.get_domain_pk,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="core.domain",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='package',
-            unique_together={('name', 'version', '_pulp_domain')},
+            name="package",
+            unique_together={("name", "version", "_pulp_domain")},
         ),
     ]

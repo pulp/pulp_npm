@@ -1,11 +1,11 @@
 # coding=utf-8
 """Tests that CRUD npm remotes."""
+
 from random import choice
 import pytest
 import uuid
 
 from pulpcore.client.pulp_npm.exceptions import ApiException
-
 
 ON_DEMAND_DOWNLOAD_POLICIES = ("on_demand", "streamed")
 

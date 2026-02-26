@@ -47,12 +47,12 @@ jobs:
       - name: "Run black"
         run: |
           black --version
-          black --check --diff .
+          black --check --diff . --exclude '(\.ci/|\.github/)'
 
       # Lint code.
       - name: "Run flake8"
         run: |
-          flake8
+          flake8 --exclude=./.github,./.ci
 
       - name: "Run extra lint checks"
         run: |

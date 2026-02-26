@@ -66,6 +66,8 @@ ignore = [
     ".ci/**",
     "lint_requirements.txt",
     ".flake8",
+    "CLAUDE.md",
+    "AGENTS.md"
 ]
 
 [tool.black]

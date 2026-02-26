@@ -1,5 +1,6 @@
 # coding=utf-8
 """Constants for Pulp Npm plugin tests."""
+
 from urllib.parse import urljoin
 
 PULP_FIXTURES_BASE_URL = "https://fixtures.pulpproject.org/"

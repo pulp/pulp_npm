@@ -9,53 +9,113 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('core', '0091_systemid'),
+        ("core", "0091_systemid"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NpmRemote',
+            name="NpmRemote",
             fields=[
-                ('remote_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, related_name='npm_npmremote', serialize=False, to='core.remote')),
+                (
+                    "remote_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        related_name="npm_npmremote",
+                        serialize=False,
+                        to="core.remote",
+                    ),
+                ),
             ],
             options={
-                'default_related_name': '%(app_label)s_%(model_name)s',
+                "default_related_name": "%(app_label)s_%(model_name)s",
             },
-            bases=('core.remote',),
+            bases=("core.remote",),
         ),
         migrations.CreateModel(
-            name='NpmRepository',
+            name="NpmRepository",
             fields=[
-                ('repository_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, related_name='npm_npmrepository', serialize=False, to='core.repository')),
+                (
+                    "repository_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        related_name="npm_npmrepository",
+                        serialize=False,
+                        to="core.repository",
+                    ),
+                ),
             ],
             options={
-                'default_related_name': '%(app_label)s_%(model_name)s',
+                "default_related_name": "%(app_label)s_%(model_name)s",
             },
-            bases=('core.repository',),
+            bases=("core.repository",),
         ),
         migrations.CreateModel(
-            name='Package',
+            name="Package",
             fields=[
-                ('content_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, related_name='npm_package', serialize=False, to='core.content')),
-                ('name', models.CharField(max_length=214)),
-                ('version', models.CharField(max_length=16)),
+                (
+                    "content_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        related_name="npm_package",
+                        serialize=False,
+                        to="core.content",
+                    ),
+                ),
+                ("name", models.CharField(max_length=214)),
+                ("version", models.CharField(max_length=16)),
             ],
             options={
-                'default_related_name': '%(app_label)s_%(model_name)s',
-                'unique_together': {('name', 'version')},
+                "default_related_name": "%(app_label)s_%(model_name)s",
+                "unique_together": {("name", "version")},
             },
-            bases=('core.content',),
+            bases=("core.content",),
         ),
         migrations.CreateModel(
-            name='NpmDistribution',
+            name="NpmDistribution",
             fields=[
-                ('basedistribution_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, related_name='npm_npmdistribution', serialize=False, to='core.basedistribution')),
-                ('repository', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='npm_npmdistribution', to='core.repository')),
-                ('repository_version', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='npm_npmdistribution', to='core.repositoryversion')),
+                (
+                    "basedistribution_ptr",
+                    models.OneToOneField(
+                        auto_created=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        parent_link=True,
+                        primary_key=True,
+                        related_name="npm_npmdistribution",
+                        serialize=False,
+                        to="core.basedistribution",
+                    ),
+                ),
+                (
+                    "repository",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="npm_npmdistribution",
+                        to="core.repository",
+                    ),
+                ),
+                (
+                    "repository_version",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="npm_npmdistribution",
+                        to="core.repositoryversion",
+                    ),
+                ),
             ],
             options={
-                'default_related_name': '%(app_label)s_%(model_name)s',
+                "default_related_name": "%(app_label)s_%(model_name)s",
             },
-            bases=('core.basedistribution',),
+            bases=("core.basedistribution",),
         ),
     ]

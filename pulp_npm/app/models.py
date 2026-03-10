@@ -39,7 +39,8 @@ class Package(Content):
         """
         Returns relative_path.
         """
-        return f"{self.name}/-/{self.name}-{self.version}.tgz"
+        base_name = self.name.split("/")[-1] if "/" in self.name else self.name
+        return f"{self.name}/-/{base_name}-{self.version}.tgz"
 
     @staticmethod
     def init_from_artifact_and_relative_path(artifact, relative_path):

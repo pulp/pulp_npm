@@ -66,7 +66,8 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
                 data["version"] = metadata["version"]
 
         if "relative_path" not in data or not data["relative_path"]:
-            data["relative_path"] = f"{data['name']}/-/{data['name']}-{data['version']}.tgz"
+            base_name = data["name"].split("/")[-1] if "/" in data["name"] else data["name"]
+            data["relative_path"] = f"{data['name']}/-/{base_name}-{data['version']}.tgz"
 
         return data
 
@@ -149,7 +150,8 @@ class NpmPackageUploadSerializer(NpmPackageSerializer):
                 data["version"] = metadata["version"]
 
         if "relative_path" not in data or not data["relative_path"]:
-            data["relative_path"] = f"{data['name']}/-/{data['name']}-{data['version']}.tgz"
+            base_name = data["name"].split("/")[-1] if "/" in data["name"] else data["name"]
+            data["relative_path"] = f"{data['name']}/-/{base_name}-{data['version']}.tgz"
 
         return data
 

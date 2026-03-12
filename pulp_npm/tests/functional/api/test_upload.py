@@ -85,9 +85,7 @@ def test_create_content_into_repository(
     )
     tgz_path = _write_tgz_to_file(tmp_path, tgz_bytes)
 
-    response = npm_bindings.ContentPackagesApi.create(
-        file=tgz_path, repository=repo.pulp_href
-    )
+    response = npm_bindings.ContentPackagesApi.create(file=tgz_path, repository=repo.pulp_href)
     task = monitor_task(response.task)
     assert task.state == "completed"
 
@@ -164,9 +162,7 @@ def test_sync_upload_duplicate_is_idempotent(npm_bindings, tmp_path):
 def test_sync_upload_scoped_package(npm_bindings, tmp_path):
     """Synchronous upload of a scoped npm package (@scope/name)."""
     scope = uuid.uuid4().hex[:6]
-    tgz_bytes, name, version = _build_npm_tgz(
-        name=f"@{scope}/my-plugin", version="0.5.0"
-    )
+    tgz_bytes, name, version = _build_npm_tgz(name=f"@{scope}/my-plugin", version="0.5.0")
     tgz_path = _write_tgz_to_file(tmp_path, tgz_bytes)
 
     content = npm_bindings.ContentPackagesApi.upload(file=tgz_path)
@@ -213,9 +209,7 @@ def test_upload_multiple_then_batch_add(
     repo = npm_repository_factory()
     hrefs = []
     for i in range(3):
-        tgz_bytes, _, _ = _build_npm_tgz(
-            name=f"batch-{uuid.uuid4().hex[:8]}", version=f"{i}.0.0"
-        )
+        tgz_bytes, _, _ = _build_npm_tgz(name=f"batch-{uuid.uuid4().hex[:8]}", version=f"{i}.0.0")
         path = _write_tgz_to_file(tmp_path, tgz_bytes, f"batch-{i}.tgz")
         content = npm_bindings.ContentPackagesApi.upload(file=path)
         hrefs.append(content.pulp_href)

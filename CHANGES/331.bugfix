@@ -1,0 +1,1 @@
+Fixed synchronization in NpmFirstStage to correctly handle version strings with `||` and `~`.

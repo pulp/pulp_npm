@@ -84,17 +84,24 @@ class NpmFirstStage(Stage):
             while to_download:
                 next_batch = []
                 for name, version in to_download:
+                    if version is None:
+                        raise ValueError(f"Version for {name} is None")
+                    version_clean = (
+                        version.split("||")[-1].strip().replace("~", "").replace("^", "")
+                    )
+
                     new_url = self.remote.url.replace(data[0]["name"], name)
-                    new_url = new_url.replace(data[0]["version"], version.replace("^", ""))
+                    new_url = new_url.replace(data[0]["version"], version_clean)
+
                     downloader = self.remote.get_downloader(url=new_url)
                     result = await downloader.run()
+
                     new_data = self.get_json_data(result.path)
                     data.append(new_data)
                     next_batch.extend(new_data.get("dependencies", {}).items())
-                    downloaded.append((name, version))
+                    downloaded.append((name, version_clean))
 
                 to_download.extend(next_batch)
-
                 for dependency in downloaded:
                     if dependency in to_download:
                         to_download.remove(dependency)

@@ -1,0 +1,1 @@
+Fixed sync failure for dependencies using `~` or `||` ranges.

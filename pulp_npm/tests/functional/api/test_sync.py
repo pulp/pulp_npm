@@ -65,3 +65,29 @@ def test_invalid_npm_content(
     assert exp.value.task.state == "failed"
     assert "mismatched" in exp.value.task.error["description"]
     assert "empty" in exp.value.task.error["description"]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://registry.npmjs.org/@types/node/22.16.4",
+        "https://registry.npmjs.org/file-entry-cache/8.0.0",
+    ],
+)
+@pytest.mark.parallel
+def test_sync_package_with_dependencies(
+    url, monitor_task, npm_bindings, npm_remote_factory, npm_repository_factory
+):
+    """
+    Sync a repository containing packages with dependencies that use ^, ~, or ||.
+    """
+    remote = npm_remote_factory(url=url)
+    repo = npm_repository_factory(remote=remote.pulp_href)
+
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repo.pulp_href, {}).task)
+    synced_repo = npm_bindings.RepositoriesNpmApi.read(repo.pulp_href)
+
+    latest_version = npm_bindings.RepositoriesNpmVersionsApi.read(synced_repo.latest_version_href)
+    assert latest_version.content_summary.present["npm.package"]["count"] > 1
+    assert latest_version.content_summary.added["npm.package"]["count"] > 1
+    assert synced_repo.latest_version_href.endswith("/1/")

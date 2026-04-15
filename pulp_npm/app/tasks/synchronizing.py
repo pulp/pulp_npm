@@ -1,4 +1,3 @@
-from gettext import gettext as _
 import json
 import logging
 
@@ -11,6 +10,7 @@ from pulpcore.plugin.stages import (
 )
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 
+from pulp_npm.app.exceptions import RemoteURLRequiredError
 from pulp_npm.app.models import Package, NpmRemote
 
 log = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def synchronize(remote_pk, repository_pk, mirror=False):
     repository = Repository.objects.get(pk=repository_pk)
 
     if not remote.url:
-        raise ValueError(_("A remote must have a url specified to synchronize."))
+        raise RemoteURLRequiredError()
 
     # Interpret policy to download Artifacts or not
     deferred_download = remote.policy != Remote.IMMEDIATE

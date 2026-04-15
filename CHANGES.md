@@ -8,6 +8,15 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.7.1 (2026-04-14) {: #0.7.1 }
+
+#### Bugfixes {: #0.7.1-bugfix }
+
+- Fixed sync failure for dependencies using `~` or `||` ranges.
+  [#331](https://github.com/pulp/pulp_npm/issues/331)
+
+---
+
 ## 0.7.0 (2026-03-10) {: #0.7.0 }
 
 No significant changes.

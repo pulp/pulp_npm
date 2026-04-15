@@ -8,6 +8,7 @@ from pulpcore.plugin import serializers as core_serializers
 from pulpcore.plugin.util import get_domain_pk
 
 from . import models
+from .exceptions import MetadataExtractionError, MissingArtifactError
 from .utils import extract_npm_metadata_from_artifact
 
 
@@ -43,9 +44,7 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
 
         artifact = data.get("artifact")
         if artifact is None:
-            raise serializers.ValidationError(
-                _("An artifact is required to create npm package content.")
-            )
+            raise MissingArtifactError()
 
         needs_name = "name" not in data or not data["name"]
         needs_version = "version" not in data or not data["version"]
@@ -54,12 +53,7 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
             try:
                 metadata = extract_npm_metadata_from_artifact(artifact)
             except ValueError as e:
-                raise serializers.ValidationError(
-                    _(
-                        "Could not extract metadata from npm tarball: {}. "
-                        "Please provide 'name' and 'version' explicitly."
-                    ).format(e)
-                )
+                raise MetadataExtractionError(str(e))
             if needs_name:
                 data["name"] = metadata["name"]
             if needs_version:

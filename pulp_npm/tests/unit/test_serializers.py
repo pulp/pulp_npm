@@ -1,10 +1,11 @@
 import unittest
+
 from django.test import TestCase
 
-from pulp_npm.app.serializers import NpmPackageSerializer
-from pulp_npm.app.models import Package
-
 from pulpcore.plugin.models import Artifact
+
+from pulp_npm.app.models import Package
+from pulp_npm.app.serializers import NpmPackageSerializer
 
 
 # Fill data with sufficient information to create Package

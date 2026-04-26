@@ -1,17 +1,17 @@
-from gettext import gettext as _
 import json
 import logging
+from gettext import gettext as _
 
 from pulpcore.plugin.models import Artifact, Remote, Repository
+from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
     DeclarativeVersion,
     Stage,
 )
-from pulpcore.plugin.serializers import RepositoryVersionSerializer
 
-from pulp_npm.app.models import Package, NpmRemote
+from pulp_npm.app.models import NpmRemote, Package
 
 log = logging.getLogger(__name__)
 

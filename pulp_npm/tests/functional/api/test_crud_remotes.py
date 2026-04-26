@@ -1,9 +1,10 @@
 # coding=utf-8
 """Tests that CRUD npm remotes."""
 
-from random import choice
-import pytest
 import uuid
+from random import choice
+
+import pytest
 
 from pulpcore.client.pulp_npm.exceptions import ApiException
 

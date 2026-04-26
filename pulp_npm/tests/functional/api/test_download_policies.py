@@ -2,8 +2,9 @@
 """Tests for Pulp`s download policies."""
 
 import json
-import pytest
 from urllib.parse import urljoin
+
+import pytest
 
 from pulpcore.client.pulp_npm import RepositorySyncURL
 

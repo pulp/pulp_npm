@@ -1,6 +1,7 @@
-import pytest
 import uuid
 from collections import defaultdict
+
+import pytest
 
 from pulpcore.tests.functional.utils import BindingsNamespace
 

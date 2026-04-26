@@ -4,7 +4,6 @@
 import pytest
 
 from pulpcore.client.pulp_npm import RepositorySyncURL
-
 from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulp_npm.tests.functional.constants import (

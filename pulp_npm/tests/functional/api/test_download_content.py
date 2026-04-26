@@ -2,10 +2,10 @@
 """Tests that verify download of content served by Pulp."""
 
 import hashlib
-import pytest
 from random import choice
 from urllib.parse import urljoin
 
+import pytest
 from aiohttp.client_exceptions import ClientResponseError
 
 from pulpcore.client.pulp_npm import RepositorySyncURL

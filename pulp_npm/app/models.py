@@ -5,16 +5,15 @@ from aiohttp.web_response import Response
 from django.conf import settings
 from django.db import models
 
-
 from pulpcore.plugin.models import (
     Content,
+    Distribution,
     Remote,
     Repository,
-    Distribution,
 )
-
 from pulpcore.plugin.util import get_domain_pk
-from .utils import urlpath_sanitize, extract_package_info
+
+from .utils import extract_package_info, urlpath_sanitize
 
 logger = getLogger(__name__)
 

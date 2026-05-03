@@ -36,7 +36,6 @@ PULP_API_ROOT="$(yq -r '.pulp_scenario_settings.api_root // .pulp_settings.api_r
 
 pulp config create --base-url https://pulp --api-root "${PULP_API_ROOT}" --username "admin" --password "password"
 
-
 cd .ci/ansible/
 
 ansible-playbook build_container.yaml

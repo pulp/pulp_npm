@@ -22,14 +22,21 @@ Using Pulp you can:
 - Promote content through different repos in an organized way
 
 ## About pulp_npm
-The plugin pulp_npm currently supports mirroring one specific version of a package and make it available.
-Since the plugin is API compatible with the NPM Registry, you can use the `npm` CLI to download packages from Pulp.
-For ex:
-```
-npm install --registry http://localhost:5001/pulp/content/{domain}/npm/ react
+The plugin pulp_npm supports mirroring npm packages and hosting your own npm registry with Pulp.
+Since the plugin is API compatible with the NPM Registry, you can use standard npm/yarn tooling:
+
+**Install packages from Pulp:**
+```bash
+npm install --registry https://pulp.example.com/pulp/content/{domain}/my-repo/ react
 ```
 
-We are working to support more ways of mirroring the NPM Registry and allow uploads of npm content to pulp_npm.
+**Publish packages to Pulp with npm or yarn:**
+```bash
+npm publish --registry https://pulp.example.com/npm/{domain}/my-repo/
+yarn publish --registry https://pulp.example.com/npm/{domain}/my-repo/
+```
+
+See the [Publish Packages with npm / yarn](docs/user/guides/npm-publish.md) guide for full setup instructions.
 
 ## License
 - License: GPLv2+

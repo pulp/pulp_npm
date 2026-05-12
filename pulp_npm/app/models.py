@@ -30,7 +30,7 @@ class Package(Content):
     repo_key_fields = ("name", "version")
 
     name = models.CharField(max_length=214)
-    version = models.CharField(max_length=16)
+    version = models.CharField(max_length=256)
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @property

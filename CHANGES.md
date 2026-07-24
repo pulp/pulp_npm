@@ -8,6 +8,14 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.9.0 (2026-07-23) {: #0.9.0 }
+
+#### Features {: #0.9.0-feature }
+
+- Add more Pulp Exceptions.
+
+---
+
 ## 0.8.0 (2026-05-12) {: #0.8.0 }
 
 #### Bugfixes {: #0.8.0-bugfix }

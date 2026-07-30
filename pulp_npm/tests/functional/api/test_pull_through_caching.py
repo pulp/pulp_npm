@@ -16,7 +16,12 @@ def test_pull_through_install(
 
     latest_package_version = package_metadata["dist-tags"]["latest"]
     latest_package_metadata = package_metadata["versions"][latest_package_version]
-    package_filename = latest_package_metadata["dist"]["tarball"].removeprefix(NPM_FIXTURE_URL)
+    tarball_url = latest_package_metadata["dist"]["tarball"]
+
+    # The tarball URL should resolve through Pulp, not the upstream remote.
+    assert tarball_url.startswith(distro.base_url)
+    assert not tarball_url.startswith(NPM_FIXTURE_URL)
+    package_filename = tarball_url.removeprefix(distro.base_url)
 
     package_download = http_get(f"{distro.base_url}{package_filename}")
 

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 
 from pulpcore.plugin.models import (
+    AutoAddObjPermsMixin,
     Content,
     Distribution,
     Remote,
@@ -52,7 +53,7 @@ class Package(Content):
         unique_together = ("name", "version", "_pulp_domain")
 
 
-class NpmRemote(Remote):
+class NpmRemote(Remote, AutoAddObjPermsMixin):
     """
     A Remote for NpmContent.
 
@@ -71,9 +72,12 @@ class NpmRemote(Remote):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_npmremote", "Can manage roles on npm remotes"),
+        ]
 
 
-class NpmRepository(Repository):
+class NpmRepository(Repository, AutoAddObjPermsMixin):
     """
     A Repository for NpmContent.
 
@@ -89,9 +93,14 @@ class NpmRepository(Repository):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("sync_npmrepository", "Can start a sync task"),
+            ("modify_npmrepository", "Can modify content of the repository"),
+            ("manage_roles_npmrepository", "Can manage roles on npm repositories"),
+        ]
 
 
-class NpmDistribution(Distribution):
+class NpmDistribution(Distribution, AutoAddObjPermsMixin):
     """
     Distribution for "npm" content.
     """
@@ -100,6 +109,9 @@ class NpmDistribution(Distribution):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_npmdistribution", "Can manage roles on npm distributions"),
+        ]
 
     def content_handler(self, path):
         data = {}

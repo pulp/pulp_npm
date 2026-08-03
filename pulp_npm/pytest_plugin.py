@@ -1,3 +1,5 @@
+import json
+import os
 import uuid
 from collections import defaultdict
 
@@ -60,6 +62,38 @@ def npm_distribution_factory(npm_bindings, gen_object_with_cleanup):
         return gen_object_with_cleanup(npm_bindings.DistributionsNpmApi, data, **kwargs)
 
     return _npm_distribution_factory
+
+
+@pytest.fixture(scope="class")
+def npm_fixtures_root(tmp_path_factory):
+    return tmp_path_factory.mktemp("npm_fixtures")
+
+
+@pytest.fixture(scope="class")
+def npm_fixture_server(npm_fixtures_root, gen_fixture_server):
+    return gen_fixture_server(npm_fixtures_root, None)
+
+
+@pytest.fixture(scope="class")
+def npm_package_url(npm_fixtures_root, npm_fixture_server):
+    pkg_name = "test-pkg"
+    pkg_version = "1.0.0"
+
+    tarball_dir = npm_fixtures_root / pkg_name / "-"
+    tarball_dir.mkdir(parents=True)
+    tarball_path = tarball_dir / f"{pkg_name}-{pkg_version}.tgz"
+    tarball_path.write_bytes(os.urandom(1024))
+
+    tarball_url = npm_fixture_server.make_url(f"/{pkg_name}/-/{pkg_name}-{pkg_version}.tgz")
+    metadata = {
+        "name": pkg_name,
+        "version": pkg_version,
+        "dist": {"tarball": tarball_url},
+    }
+    metadata_dir = npm_fixtures_root / pkg_name
+    (metadata_dir / pkg_version).write_text(json.dumps(metadata))
+
+    return npm_fixture_server.make_url(f"/{pkg_name}/{pkg_version}")
 
 
 @pytest.fixture(scope="function")

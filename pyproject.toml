@@ -26,6 +26,7 @@ classifiers=[
 requires-python = ">=3.11"
 dependencies = [
   "pulpcore>=3.105.0,<3.130",
+  "semver>=3.0.0",
 ]
 
 [project.urls]

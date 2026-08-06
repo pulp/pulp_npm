@@ -11,6 +11,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from pulpcore.plugin.access_policy import AccessPolicyFromDB
 from pulpcore.plugin.models import Artifact, ContentArtifact
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.util import get_domain
@@ -42,16 +43,43 @@ class NpmPublishView(APIView):
     """Handle npm/yarn publish requests (``PUT /<package>``)."""
 
     parser_classes = [JSONParser]
+    permission_classes = [AccessPolicyFromDB]
+
+    def initial(self, request, *args, **kwargs):
+        self.action = request.method.lower()
+        super().initial(request, *args, **kwargs)
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["put"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "npm_has_repository_perm:npm.modify_npmrepository",
+            },
+        ],
+    }
+
+    @classmethod
+    def urlpattern(cls):
+        return "npm/publish"
+
+    @property
+    def distribution(self):
+        if not hasattr(self, "_distribution"):
+            domain = get_domain()
+            self._distribution = get_object_or_404(
+                NpmDistribution,
+                base_path=self.kwargs["path"],
+                pulp_domain=domain,
+            )
+        return self._distribution
 
     def put(self, request, path, package_name):
         package_name = _decode_package_name(package_name)
         domain = get_domain()
 
-        distribution = get_object_or_404(
-            NpmDistribution,
-            base_path=path,
-            pulp_domain=domain,
-        )
+        distribution = self.distribution
         repository = distribution.repository
         if not repository:
             return Response(
@@ -160,12 +188,49 @@ class NpmPublishView(APIView):
 class NpmPingView(APIView):
     """Handle ``GET /-/ping`` -- registry health check."""
 
+    authentication_classes = []
+    permission_classes = []
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["get"],
+                "principal": "*",
+                "effect": "allow",
+            }
+        ]
+    }
+
+    @classmethod
+    def urlpattern(cls):
+        return "npm/ping"
+
     def get(self, request, **kwargs):
         return Response({})
 
 
 class NpmWhoamiView(APIView):
     """Handle ``GET /-/whoami`` -- return the authenticated user."""
+
+    permission_classes = [AccessPolicyFromDB]
+
+    def initial(self, request, *args, **kwargs):
+        self.action = request.method.lower()
+        super().initial(request, *args, **kwargs)
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["get"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+    }
+
+    @classmethod
+    def urlpattern(cls):
+        return "npm/whoami"
 
     def get(self, request, **kwargs):
         username = None

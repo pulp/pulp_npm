@@ -1,4 +1,7 @@
+import asyncio
 import json
+import os
+from contextlib import suppress
 from logging import getLogger
 
 from aiohttp.web_response import Response
@@ -102,31 +105,37 @@ class NpmDistribution(Distribution):
         default_related_name = "%(app_label)s_%(model_name)s"
 
     def content_handler(self, path):
-        data = {}
-
-        if not self.repository:
-            return None
-
-        repository_version = self.repository_version
-        if not repository_version:
-            repository_version = self.repository.latest_version()
-
-        content = repository_version.content
+        # A name+version path is a tarball request, handled by normal artifact lookup.
+        # An unparsable path (name is None) is not a packument request either.
         name, version = extract_package_info(path)
-        if name and version:
+        if not name or version:
             return None
 
-        packages = Package.objects.filter(name=name, pk__in=content)
+        repository_version = None
+        if self.repository:
+            repository_version = self.repository_version or self.repository.latest_version()
 
-        if not packages:
-            return None
+        packages = (
+            Package.objects.filter(name=name, pk__in=repository_version.content)
+            if repository_version is not None
+            else Package.objects.none()
+        )
 
-        data["name"] = name
-        data["versions"] = {}
-        versions = []
+        if packages:
+            return self._packument_from_local_packages(name, packages)
 
+        # A remote is attached directly (pull-through, no repository content yet):
+        # fetch it ourselves and rewrite tarball URLs, rather than returning None
+        # and letting pulpcore proxy that same remote with unmodified URLs.
+        if self.remote:
+            return self._packument_from_remote(name)
+
+        return None
+
+    def _tarball_url_prefix(self):
+        """Base URL under which this distribution serves package tarballs."""
         if settings.DOMAIN_ENABLED:
-            prefix_url = "{}/".format(
+            return "{}/".format(
                 urlpath_sanitize(
                     settings.CONTENT_ORIGIN,
                     settings.CONTENT_PATH_PREFIX,
@@ -134,14 +143,18 @@ class NpmDistribution(Distribution):
                     self.base_path,
                 )
             )
-        else:
-            prefix_url = "{}/".format(
-                urlpath_sanitize(
-                    settings.CONTENT_ORIGIN,
-                    settings.CONTENT_PATH_PREFIX,
-                    self.base_path,
-                )
+        return "{}/".format(
+            urlpath_sanitize(
+                settings.CONTENT_ORIGIN,
+                settings.CONTENT_PATH_PREFIX,
+                self.base_path,
             )
+        )
+
+    def _packument_from_local_packages(self, name, packages):
+        data = {"name": name, "versions": {}}
+        versions = []
+        prefix_url = self._tarball_url_prefix()
 
         for package in packages:
             tarball_url = f"{prefix_url}{package.name}/-/{package.relative_path.split('/')[-1]}"
@@ -157,5 +170,47 @@ class NpmDistribution(Distribution):
 
         data["dist-tags"] = {"latest": max(versions)}
 
-        serialized_data = json.dumps(data)
-        return Response(body=serialized_data)
+        return Response(body=json.dumps(data), content_type="application/json")
+
+    def _packument_from_remote(self, name):
+        """Fetch the upstream packument and rewrite dist.tarball to point at Pulp."""
+        remote = self.remote.cast()
+        url = f"{remote.url.rstrip('/')}/{name}"
+
+        async def download():
+            # The downloader's aiohttp session must be created inside the loop that
+            # uses it, so it is built here rather than outside. The session belongs
+            # to the remote's factory, so close it to not leak sockets per request.
+            downloader = remote.get_downloader(url=url)
+            try:
+                return await downloader.run()
+            finally:
+                if session := getattr(downloader, "session", None):
+                    await session.close()
+
+        # content_handler runs via sync_to_async, i.e. in a worker thread with no
+        # event loop, so the downloader's own blocking fetch() cannot be used.
+        result = None
+        try:
+            result = asyncio.run(download())
+            with open(result.path, encoding="utf-8") as fd:
+                data = json.load(fd)
+        except Exception:
+            logger.exception("Failed to read npm metadata for '%s' from '%s'", name, url)
+            return None
+        finally:
+            # The packument was downloaded to a temporary file; only the parsed JSON
+            # is needed, and packuments are mutable so they are not cached.
+            if result and result.path:
+                with suppress(OSError):
+                    os.unlink(result.path)
+
+        prefix_url = self._tarball_url_prefix()
+        for version_data in data.get("versions", {}).values():
+            tarball = version_data.get("dist", {}).get("tarball")
+            if not tarball:
+                continue
+            filename = tarball.split("/")[-1]
+            version_data["dist"]["tarball"] = f"{prefix_url}{name}/-/{filename}"
+
+        return Response(body=json.dumps(data), content_type="application/json")

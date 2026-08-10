@@ -51,7 +51,7 @@ class NpmPackageViewSet(core.SingleArtifactContentUploadViewSet):
         methods=["post"],
         serializer_class=serializers.NpmPackageUploadSerializer,
     )
-    def upload(self, request):
+    def upload(self, request, **kwargs):
         """
         Create an npm package content unit synchronously.
         """
@@ -98,7 +98,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin):
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)
-    def sync(self, request, pk):
+    def sync(self, request, pk, **kwargs):
         """
         Dispatches a sync task.
         """

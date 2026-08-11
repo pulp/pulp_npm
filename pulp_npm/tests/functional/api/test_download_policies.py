@@ -57,6 +57,9 @@ def test_sync(
     content_metadata = json.loads(http_get(urljoin(distribution.base_url, "commander")))
 
     latest_version_available = content_metadata["dist-tags"]["latest"]
-    tarball_path = content_metadata["versions"][latest_version_available]["dist"]["tarball"]
+    latest_version = content_metadata["versions"][latest_version_available]
+    assert latest_version["name"] == "commander"
+    assert latest_version["version"] == latest_version_available
+    tarball_path = latest_version["dist"]["tarball"]
 
     http_get(tarball_path)

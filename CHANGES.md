@@ -8,6 +8,18 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.10.0 (2026-08-11) {: #0.10.0 }
+
+#### Features {: #0.10.0-feature }
+
+- Added Role-Based Access Control (RBAC) to all npm viewsets and the npm publish API.
+  Users can now be assigned creator, owner, or viewer roles on repositories, remotes,
+  and distributions. The npm publish endpoint requires ``modify_npmrepository``
+  permission on the backing repository.
+  [#387](https://github.com/pulp/pulp_npm/issues/387)
+
+---
+
 ## 0.9.0 (2026-07-23) {: #0.9.0 }
 
 #### Features {: #0.9.0-feature }

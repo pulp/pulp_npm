@@ -2,7 +2,6 @@ import json
 from logging import getLogger
 
 import semver
-
 from aiohttp.web_response import Response
 from django.conf import settings
 from django.db import models
@@ -173,7 +172,9 @@ class NpmDistribution(Distribution, AutoAddObjPermsMixin):
 
         parsed = {v: semver.Version.parse(v) for v in versions if semver.Version.is_valid(v)}
         stable_versions = [v for v, parsed_v in parsed.items() if not parsed_v.prerelease]
-        latest = max(stable_versions, key=parsed.get) if stable_versions else max(parsed, key=parsed.get)
+        latest = (
+            max(stable_versions, key=parsed.get) if stable_versions else max(parsed, key=parsed.get)
+        )
         data["dist-tags"] = {"latest": latest}
 
         serialized_data = json.dumps(data)

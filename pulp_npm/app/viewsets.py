@@ -1,11 +1,14 @@
 from django.db import transaction
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 from pulpcore.plugin import viewsets as core
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
+from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
@@ -13,6 +16,12 @@ from pulpcore.plugin.serializers import (
 from pulpcore.plugin.tasking import dispatch
 
 from . import models, serializers, tasks
+from .catalog import (
+    assemble_package_index,
+    distinct_package_names_qs,
+    npm_packages_in_version,
+    resolve_repository_version,
+)
 
 
 class NpmPackageFilter(core.ContentFilter):
@@ -201,7 +210,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin, 
                 ],
             },
             {
-                "action": ["retrieve"],
+                "action": ["retrieve", "packages"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_or_obj_perms:npm.view_npmrepository",
@@ -281,6 +290,91 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin, 
         ],
         "npm.npmrepository_viewer": ["npm.view_npmrepository"],
     }
+
+    @property
+    def filter_backends(self):
+        """Repository filters apply to the repository list, not the package index.
+
+        ``packages`` is a detail GET that returns a list. Spectacular treats that
+        as a list operation and would otherwise document ``RepositoryFilter``.
+        """
+        if getattr(self, "action", None) == "packages":
+            return []
+        return super().filter_backends
+
+    def filter_queryset(self, queryset):
+        """Do not apply the repository FilterSet to package-index query params."""
+        if getattr(self, "action", None) == "packages":
+            return queryset
+        return super().filter_queryset(queryset)
+
+    def _repository_version_from_href(self, href):
+        """Load a repository version without selecting ``content_ids``."""
+        try:
+            return resolve_repository_version(href)
+        except ValueError as exc:
+            raise ValidationError({"repository_version": str(exc)}) from exc
+
+    def _requested_repository_version(self, repository):
+        """Resolve optional ``repository_version`` href/PRN, else latest complete version."""
+        href = self.request.query_params.get("repository_version")
+        if not href:
+            try:
+                # content_ids is a UUID per content unit. The catalog never reads it.
+                return repository.versions.complete().defer("content_ids").latest()
+            except RepositoryVersion.DoesNotExist:
+                return None
+        repo_version = self._repository_version_from_href(href)
+        if repo_version is None:
+            return None
+        if repo_version.repository_id != repository.pk:
+            raise ValidationError({"repository_version": "Must be a version of this repository."})
+        return repo_version
+
+    @extend_schema(
+        summary="List packages",
+        description=(
+            "Return one row per distinct package name in a repository version "
+            "(latest complete version if repository_version is omitted). "
+            "Pagination count is the number of distinct packages, not (name, version) rows. "
+            "versions lists stored version strings, newest first. "
+            "Scoped packages use the full name string (e.g. @types/node)."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="repository_version",
+                type=OpenApiTypes.URI,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "HREF or PRN of a version of this repository. "
+                    "Defaults to the latest complete version."
+                ),
+            ),
+        ],
+        responses={200: serializers.NpmRepositoryPackageSerializer(many=True)},
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        serializer_class=serializers.NpmRepositoryPackageSerializer,
+    )
+    def packages(self, request, pk, **kwargs):
+        """List distinct packages in a repository version."""
+        repository = self.get_object()
+        repo_version = self._requested_repository_version(repository)
+        content_qs = npm_packages_in_version(repo_version)
+        names_qs = distinct_package_names_qs(content_qs)
+        page = self.paginate_queryset(names_qs)
+        rows = assemble_package_index(
+            content_qs,
+            page if page is not None else list(names_qs),
+            repo_version,
+        )
+        serializer = self.get_serializer(rows, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     # This decorator is necessary since a sync operation is asyncrounous and returns
     # the id and href of the sync task.

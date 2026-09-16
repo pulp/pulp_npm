@@ -12,5 +12,6 @@ If you are just getting started, we recommend getting to know the [basic workflo
 - **Publish** packages directly using `npm publish` or `yarn publish`
 - **Host** your own private npm registry
 - **Pull-through caching** for on-demand proxying of upstream packages
+- **Package catalog** — repository package index, metrics, and rebuild collapse on the content API
 
 ## Overview

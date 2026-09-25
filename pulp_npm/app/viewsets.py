@@ -1,11 +1,15 @@
 from django.db import transaction
-from drf_spectacular.utils import extend_schema
+from django_filters.rest_framework import BooleanFilter
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.serializers import IntegerField, URLField, ValidationError
 
 from pulpcore.plugin import viewsets as core
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
+from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
@@ -13,6 +17,15 @@ from pulpcore.plugin.serializers import (
 from pulpcore.plugin.tasking import dispatch
 
 from . import models, serializers, tasks
+from .catalog import (
+    apply_package_prefix_filters,
+    assemble_package_index,
+    collapse_npm_builds,
+    distinct_name_qs,
+    npm_packages_in_version,
+    repository_metrics,
+)
+from .versions import BUILD_SUFFIX_PATTERN, normalize_package_index_ordering
 
 
 class NpmPackageFilter(core.ContentFilter):
@@ -20,9 +33,28 @@ class NpmPackageFilter(core.ContentFilter):
     FilterSet for Package.
     """
 
+    collapse_builds = BooleanFilter(
+        method="filter_collapse_builds",
+        help_text=(
+            "When true, collapse rebuilds of the same logical version: strip a trailing "
+            f"suffix matching {BUILD_SUFFIX_PATTERN} from version, then keep one Package "
+            "per (name, base_version) with the latest pulp_created. "
+            "Default false."
+        ),
+    )
+
+    def filter_collapse_builds(self, qs, name, value):
+        """Documented on the FilterSet; applied in the viewset after ordering.
+
+        DISTINCT ON requires ORDER BY to start with the distinct columns. The
+        viewset applies collapse after other filter backends so that ordering
+        cannot break it.
+        """
+        return qs
+
     class Meta:
         model = models.Package
-        fields = {"name": ["exact", "in"]}
+        fields = {"name": ["exact", "in"], "version": ["exact"]}
 
 
 class NpmPackageViewSet(core.SingleArtifactContentUploadViewSet):
@@ -41,6 +73,18 @@ class NpmPackageViewSet(core.SingleArtifactContentUploadViewSet):
     serializer_class = serializers.NpmPackageSerializer
     filterset_class = NpmPackageFilter
     queryset_filtering_required_permission = "npm.view_package"
+
+    def filter_queryset(self, queryset):
+        """Apply ``collapse_builds`` after other backends so DISTINCT ON stays valid."""
+        queryset = super().filter_queryset(queryset)
+        if getattr(self, "action", "") != "list":
+            return queryset
+        raw = self.request.query_params.get("collapse_builds")
+        if raw is None or raw == "":
+            return queryset
+        if str(raw).lower() in ("true", "t", "yes", "y", "1"):
+            return collapse_npm_builds(queryset)
+        return queryset
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
@@ -201,7 +245,7 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin, 
                 ],
             },
             {
-                "action": ["retrieve"],
+                "action": ["retrieve", "packages", "metrics"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_or_obj_perms:npm.view_npmrepository",
@@ -281,6 +325,167 @@ class NpmRepositoryViewSet(core.RepositoryViewSet, ModifyRepositoryActionMixin, 
         ],
         "npm.npmrepository_viewer": ["npm.view_npmrepository"],
     }
+
+    def filter_queryset(self, queryset):
+        """Do not apply the repository FilterSet to package-index query params."""
+        if getattr(self, "action", None) in ("packages", "metrics"):
+            return queryset
+        return super().filter_queryset(queryset)
+
+    def _requested_repository_version(self, repository):
+        """Resolve optional ``repository_version`` href/PRN, else latest complete version."""
+        href = self.request.query_params.get("repository_version")
+        if not href:
+            return repository.latest_version()
+        repo_version = self.get_resource(href, RepositoryVersion)
+        if repo_version.repository_id != repository.pk:
+            raise ValidationError({"repository_version": "Must be a version of this repository."})
+        return repo_version
+
+    @extend_schema(
+        summary="List packages",
+        description=(
+            "Return one row per distinct package name in a repository version "
+            "(latest complete version if repository_version is omitted). "
+            "Pagination count is the number of distinct packages, not (name, version) rows. "
+            "Each row includes last_updated (newest membership among any rebuild), "
+            "versions (logical version keys after rebuild-suffix strip, newest first), "
+            "and latest_releases (newest rebuild per logical version, same order). "
+            "set(versions) === set(latest_releases[].version). "
+            "Scoped packages use the full name string (e.g. @types/node)."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="repository_version",
+                type=OpenApiTypes.URI,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "HREF or PRN of a version of this repository. "
+                    "Defaults to the latest complete version."
+                ),
+            ),
+            OpenApiParameter(
+                name="name__istartswith",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Case-insensitive prefix on the full package name, including scope "
+                    "(e.g. @types/)."
+                ),
+            ),
+            OpenApiParameter(
+                name="name__icontains",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Case-insensitive substring on the full package name, including scope."
+                ),
+            ),
+            OpenApiParameter(
+                name="ordering",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                many=True,
+                description=(
+                    "Order catalog rows. Allowed: name, last_updated. "
+                    "Prefix with '-' for descending. Default is name."
+                ),
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Number of results to return per page.",
+            ),
+            OpenApiParameter(
+                name="offset",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="The initial index from which to return the results.",
+            ),
+        ],
+        responses={
+            200: inline_serializer(
+                name="PaginatedNpmRepositoryPackageList",
+                fields={
+                    "count": IntegerField(),
+                    "next": URLField(allow_null=True),
+                    "previous": URLField(allow_null=True),
+                    "results": serializers.NpmRepositoryPackageSerializer(many=True),
+                },
+            )
+        },
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        serializer_class=serializers.NpmRepositoryPackageSerializer,
+    )
+    def packages(self, request, pk, **kwargs):
+        """List distinct packages in a repository version."""
+        repository = self.get_object()
+        repo_version = self._requested_repository_version(repository)
+        content_qs = npm_packages_in_version(repo_version)
+        content_qs = apply_package_prefix_filters(
+            content_qs,
+            name_prefix=request.query_params.get("name__istartswith"),
+            name_contains=request.query_params.get("name__icontains"),
+        )
+        try:
+            ordering = normalize_package_index_ordering(request.query_params.getlist("ordering"))
+        except ValueError as exc:
+            raise ValidationError({"ordering": str(exc)}) from exc
+        names_qs = distinct_name_qs(content_qs, repository, repo_version, ordering=ordering)
+        page = self.paginate_queryset(names_qs)
+        rows = assemble_package_index(
+            content_qs,
+            page if page is not None else list(names_qs),
+            repository,
+            repo_version,
+        )
+        serializer = self.get_serializer(rows, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Repository metrics",
+        description=(
+            "Distinct counts for Package content in a repository version "
+            "(latest complete version if repository_version is omitted). "
+            "package_count is distinct name. version_count is distinct "
+            "(name, base_version) after rebuild-suffix strip. "
+            "build_count is distinct (name, full version)."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="repository_version",
+                type=OpenApiTypes.URI,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "HREF or PRN of a version of this repository. "
+                    "Defaults to the latest complete version."
+                ),
+            ),
+        ],
+        responses={200: serializers.NpmRepositoryMetricsSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        serializer_class=serializers.NpmRepositoryMetricsSerializer,
+    )
+    def metrics(self, request, pk, **kwargs):
+        """Return package / version / build counts for a repository version."""
+        repository = self.get_object()
+        repo_version = self._requested_repository_version(repository)
+        counts = repository_metrics(npm_packages_in_version(repo_version))
+        serializer = self.get_serializer(counts)
+        return Response(serializer.data)
 
     # This decorator is necessary since a sync operation is asyncrounous and returns
     # the id and href of the sync task.

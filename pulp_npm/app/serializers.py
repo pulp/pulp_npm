@@ -9,6 +9,7 @@ from pulpcore.plugin.util import get_domain_pk
 
 from . import models
 from .utils import extract_npm_metadata_from_artifact
+from .versions import BUILD_SUFFIX_PATTERN, strip_build_suffix
 
 
 class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerializer):
@@ -31,6 +32,16 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
         ),
         required=False,
     )
+    base_version = serializers.SerializerMethodField(
+        help_text=_(
+            "The package version with a trailing rebuild suffix stripped "
+            "(matching %s). Equal to version when no suffix is present."
+        )
+        % BUILD_SUFFIX_PATTERN,
+    )
+
+    def get_base_version(self, obj):
+        return strip_build_suffix(obj.version)
 
     def deferred_validate(self, data):
         """
@@ -92,6 +103,7 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
         fields = core_serializers.SingleArtifactContentUploadSerializer.Meta.fields + (
             "name",
             "version",
+            "base_version",
             "relative_path",
         )
         model = models.Package
@@ -158,6 +170,72 @@ class NpmPackageUploadSerializer(NpmPackageSerializer):
     class Meta(NpmPackageSerializer.Meta):
         fields = tuple(f for f in NpmPackageSerializer.Meta.fields if f not in ["repository"])
         ref_name = "NpmPackageUpload"
+
+
+class NpmPackageReleaseSerializer(serializers.Serializer):
+    """One logical version on the repository package index."""
+
+    version = serializers.CharField(
+        help_text=_("Logical version key (rebuild suffix stripped)."),
+    )
+    release = serializers.CharField(
+        help_text=_(
+            "Rebuild/release qualifier within the version line "
+            "(e.g. rhlw-00001 or rhlw-00001-n0001). "
+            "Empty when the selected unit has no rebuild suffix."
+        ),
+        allow_blank=True,
+    )
+    created_at = serializers.DateTimeField(
+        help_text=_(
+            "When this logical version entered the repository: RepositoryContent.pulp_created "
+            "of the newest rebuild, falling back to the content unit's pulp_created."
+        ),
+    )
+
+
+class NpmRepositoryPackageSerializer(serializers.Serializer):
+    """One distinct package name in a repository version."""
+
+    name = serializers.CharField(
+        help_text=_("npm package name, including scope when present (e.g. @types/node)."),
+    )
+    last_updated = serializers.DateTimeField(
+        help_text=_(
+            "When this package was last updated in the repository: the latest "
+            "RepositoryContent.pulp_created among all Package units for this "
+            "name (any rebuild), falling back to the content unit's pulp_created."
+        ),
+        allow_null=True,
+    )
+    versions = serializers.ListField(
+        child=serializers.CharField(),
+        help_text=_(
+            "Distinct logical version keys after rebuild-suffix strip, newest first. "
+            "The set of values matches latest_releases[].version."
+        ),
+    )
+    latest_releases = NpmPackageReleaseSerializer(
+        many=True,
+        help_text=_(
+            "Newest rebuild per logical version (latest pulp_created), newest version first. "
+            "set(versions) === set(latest_releases[].version)."
+        ),
+    )
+
+
+class NpmRepositoryMetricsSerializer(serializers.Serializer):
+    """Distinct package / version / build counts for a repository version."""
+
+    package_count = serializers.IntegerField(
+        help_text=_("Distinct package names among Package units."),
+    )
+    version_count = serializers.IntegerField(
+        help_text=_("Distinct (name, base_version) pairs after rebuild-suffix strip."),
+    )
+    build_count = serializers.IntegerField(
+        help_text=_("Distinct (name, full version) pairs among Package units."),
+    )
 
 
 class NpmRemoteSerializer(core_serializers.RemoteSerializer):

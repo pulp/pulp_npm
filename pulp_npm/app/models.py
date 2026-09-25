@@ -4,6 +4,7 @@ from logging import getLogger
 import semver
 from aiohttp.web_response import Response
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 from pulpcore.plugin.models import (
@@ -52,6 +53,13 @@ class Package(Content):
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = ("name", "version", "_pulp_domain")
+        indexes = [
+            GinIndex(
+                fields=["name"],
+                name="npm_package_name_trgm",
+                opclasses=["gin_trgm_ops"],
+            ),
+        ]
 
 
 class NpmRemote(Remote, AutoAddObjPermsMixin):

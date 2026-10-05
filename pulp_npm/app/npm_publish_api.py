@@ -119,10 +119,33 @@ class NpmPublishView(APIView):
         except Exception:
             return Response({"error": "Could not base64-decode attachment data"}, status=400)
 
-        artifact = self._save_artifact(tarball_bytes, domain)
-
         name = package_name
         version = version_key
+
+        # Re-publishing a version with the same tarball is idempotent. A different tarball would
+        # otherwise be discarded while the client reports success, so it is rejected.
+        existing_package = Package.objects.filter(
+            name=name, version=version, _pulp_domain=domain
+        ).first()
+        existing_artifact = (
+            ContentArtifact.objects.filter(content=existing_package, artifact__isnull=False)
+            .select_related("artifact")
+            .first()
+            if existing_package
+            else None
+        )
+        if existing_artifact and (
+            existing_artifact.artifact.sha256 != hashlib.sha256(tarball_bytes).hexdigest()
+        ):
+            return Response(
+                {
+                    "error": f"{name}@{version} is already published with a different tarball; "
+                    "publish a new version"
+                },
+                status=409,
+            )
+
+        artifact = self._save_artifact(tarball_bytes, domain)
 
         try:
             content = Package(name=name, version=version)

@@ -64,6 +64,8 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
                 data["name"] = metadata["name"]
             if needs_version:
                 data["version"] = metadata["version"]
+            if metadata.get("manifest"):
+                data["manifest"] = metadata["manifest"]
 
         if "relative_path" not in data or not data["relative_path"]:
             base_name = data["name"].split("/")[-1] if "/" in data["name"] else data["name"]
@@ -148,6 +150,8 @@ class NpmPackageUploadSerializer(NpmPackageSerializer):
                 data["name"] = metadata["name"]
             if needs_version:
                 data["version"] = metadata["version"]
+            if metadata.get("manifest"):
+                data["manifest"] = metadata["manifest"]
 
         if "relative_path" not in data or not data["relative_path"]:
             base_name = data["name"].split("/")[-1] if "/" in data["name"] else data["name"]

@@ -104,7 +104,11 @@ class NpmFirstStage(Stage):
                         to_download.remove(dependency)
 
         for pkg in data:
-            package = Package(name=pkg["name"], version=pkg["version"])
+            # The upstream registry document already carries this version's own
+            # metadata; carry it across so a mirrored package resolves its
+            # dependencies exactly as it would upstream.
+            manifest = {k: v for k, v in pkg.items() if not k.startswith("_") and k != "dist"}
+            package = Package(name=pkg["name"], version=pkg["version"], manifest=manifest)
             artifact = Artifact()  # make Artifact in memory-only
             url = pkg["dist"]["tarball"]
             da = DeclarativeArtifact(

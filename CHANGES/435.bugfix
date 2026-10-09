@@ -1,0 +1,5 @@
+Included each package version's own metadata (dependencies, peer/optional dependencies,
+engines, bin, scripts and related fields) and its `dist.integrity` checksum in the
+registry document. Previously only the name, version and tarball URL were served, so a
+client installing a package from Pulp silently skipped that package's dependencies and
+could not verify the tarball it downloaded.

@@ -124,11 +124,21 @@ class NpmPublishView(APIView):
         name = package_name
         version = version_key
 
+        # `npm publish` sends the package's own metadata for this version; keep it
+        # so the registry document can carry the dependency list (without it a
+        # client installs this package and silently skips its dependencies).
+        manifest = versions.get(version_key) or {}
+        if not isinstance(manifest, dict):
+            manifest = {}
+
         try:
-            content = Package(name=name, version=version)
+            content = Package(name=name, version=version, manifest=manifest)
             content.save()
         except IntegrityError:
             content = Package.objects.get(name=name, version=version, _pulp_domain=domain)
+            if manifest and content.manifest != manifest:
+                content.manifest = manifest
+                content.save(update_fields=["manifest"])
 
         relative_path = content.relative_path
         try:

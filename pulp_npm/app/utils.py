@@ -53,7 +53,8 @@ def extract_npm_metadata_from_artifact(artifact):
         artifact: A Pulp Artifact whose file is an npm tarball (.tgz).
 
     Returns:
-        dict: A dictionary with ``name`` and ``version`` keys.
+        dict: A dictionary with ``name`` and ``version`` keys, plus ``manifest``
+            holding the full decoded ``package.json``.
 
     Raises:
         ValueError: If the tarball cannot be read or ``package.json`` is missing/invalid.
@@ -93,4 +94,4 @@ def extract_npm_metadata_from_artifact(artifact):
             "package.json in npm tarball is missing required 'name' or 'version' fields."
         )
 
-    return {"name": name, "version": version}
+    return {"name": name, "version": version, "manifest": package_data}

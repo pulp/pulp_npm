@@ -486,6 +486,78 @@ def test_object_level_roles(
     assert c_list.count == 1
 
 
+# Content labeling
+@pytest.mark.parallel
+def test_content_labeling_permissions(
+    gen_user,
+    npm_bindings,
+    npm_repository_factory,
+    npm_remote_factory,
+    npm_package_url,
+    try_action,
+    monitor_task,
+):
+    """Users need core.manage_content_labels (core.content_labeler role) to set/unset labels."""
+    from pulpcore.client.pulp_npm import SetLabel, UnsetLabel
+
+    # Admin syncs content so a package exists to label. Scope the lookup to this repo's
+    # version so parallel tests creating other packages don't affect which one we pick.
+    remote = npm_remote_factory(url=npm_package_url)
+    repo = npm_repository_factory(remote=remote.pulp_href)
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repo.pulp_href, {}).task)
+    repo = npm_bindings.RepositoriesNpmApi.read(repo.pulp_href)
+    package_href = (
+        npm_bindings.ContentPackagesApi.list(repository_version=repo.latest_version_href)
+        .results[0]
+        .pulp_href
+    )
+
+    # A user who can view content but lacks the labeler role is forbidden.
+    viewer = gen_user(model_roles=["npm.npmrepository_viewer"])
+    try_action(
+        viewer,
+        npm_bindings.ContentPackagesApi,
+        "set_label",
+        403,
+        package_href,
+        SetLabel(key="key_1", value="value_1"),
+    )
+    try_action(
+        viewer,
+        npm_bindings.ContentPackagesApi,
+        "unset_label",
+        403,
+        package_href,
+        UnsetLabel(key="key_1"),
+    )
+
+    # A user holding core.content_labeler (plus view access) can set and unset labels.
+    labeler = gen_user(model_roles=["npm.npmrepository_viewer", "core.content_labeler"])
+    try_action(
+        labeler,
+        npm_bindings.ContentPackagesApi,
+        "set_label",
+        201,
+        package_href,
+        SetLabel(key="key_1", value="value_1"),
+    )
+    assert npm_bindings.ContentPackagesApi.read(package_href).pulp_labels["key_1"] == "value_1"
+    try_action(
+        labeler,
+        npm_bindings.ContentPackagesApi,
+        "unset_label",
+        201,
+        package_href,
+        UnsetLabel(key="key_1"),
+    )
+    assert "key_1" not in npm_bindings.ContentPackagesApi.read(package_href).pulp_labels
+
+    # Regression: an admin/superuser can still label.
+    npm_bindings.ContentPackagesApi.set_label(package_href, SetLabel(key="admin", value="ok"))
+    assert npm_bindings.ContentPackagesApi.read(package_href).pulp_labels["admin"] == "ok"
+    npm_bindings.ContentPackagesApi.unset_label(package_href, UnsetLabel(key="admin"))
+
+
 @pytest.mark.parallel
 def test_ping_unauthenticated(
     npm_distribution_factory,

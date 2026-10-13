@@ -65,6 +65,12 @@ class NpmPackageViewSet(core.SingleArtifactContentUploadViewSet):
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:npm.add_package",
             },
+            {
+                "action": ["set_label", "unset_label"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ["has_model_or_domain_perms:core.manage_content_labels"],
+            },
         ],
         "queryset_scoping": {"function": "scope_queryset"},
     }

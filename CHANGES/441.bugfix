@@ -1,0 +1,2 @@
+Added an access policy allowing users with ``core.manage_content_labels`` to set and unset labels
+on npm package content. Previously labeling was superuser-only.

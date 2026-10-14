@@ -8,6 +8,16 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.10.2 (2026-10-13) {: #0.10.2 }
+
+#### Bugfixes {: #0.10.2-bugfix }
+
+- Added an access policy allowing users with ``core.manage_content_labels`` to set and unset labels
+  on npm package content. Previously labeling was superuser-only.
+  [#441](https://github.com/pulp/pulp_npm/issues/441)
+
+---
+
 ## 0.10.1 (2026-08-25) {: #0.10.1 }
 
 No significant changes.

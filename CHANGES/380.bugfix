@@ -1,0 +1,5 @@
+A distribution with both a repository and a remote now lists every version the
+remote has, plus versions held only in the repository. Previously, once a single
+version had been pulled through, the packument listed only the versions already
+in the repository, so every other version stopped being installable. If the
+remote cannot be reached, the versions held in the repository are still served.

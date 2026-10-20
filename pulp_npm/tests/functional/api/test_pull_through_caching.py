@@ -103,7 +103,7 @@ def test_packument_from_local_packages(
         assert len(http_get(tarball_url)) > 0
 
 
-def test_pull_through_with_repository_serves_cached_packument(
+def test_pull_through_with_repository_keeps_upstream_listing(
     npm_bindings,
     npm_remote_factory,
     npm_repository_factory,
@@ -111,56 +111,97 @@ def test_pull_through_with_repository_serves_cached_packument(
     http_get,
     delete_orphans_pre,
 ):
-    """A distro with both a repository and a remote hands off to local content once cached.
+    """A distro with both a repository and a remote keeps listing every upstream version.
 
-    The first packument request has no local content and is served from the remote;
-    pulling a tarball through adds that package to the repository, after which the
-    packument is built from local content instead.
+    Pulling a tarball through adds that one version to the repository. The packument
+    must still list everything upstream has, or every version not cached yet would
+    stop being installable through this distribution.
     """
     remote = npm_remote_factory(url=NPM_FIXTURE_URL)
     repo = npm_repository_factory()
     distro = npm_distribution_factory(repository=repo.pulp_href, remote=remote.pulp_href)
     PACKAGE = "commander"
 
-    remote_packument = json.loads(http_get(f"{distro.base_url}{PACKAGE}"))
-    assert remote_packument["name"] == PACKAGE
-    # Every upstream version is listed, none of which is cached in the repository yet.
-    assert len(remote_packument["versions"]) > 1
+    before = json.loads(http_get(f"{distro.base_url}{PACKAGE}"))
+    assert before["name"] == PACKAGE
+    assert len(before["versions"]) > 1
 
-    version = remote_packument["dist-tags"]["latest"]
-    tarball_url = remote_packument["versions"][version]["dist"]["tarball"]
+    version = before["dist-tags"]["latest"]
+    tarball_url = before["versions"][version]["dist"]["tarball"]
     assert tarball_url.startswith(distro.base_url)
 
     assert len(http_get(tarball_url)) > 100
 
-    local_packument = _wait_for_cached_packument(http_get, distro, PACKAGE, version)
+    _wait_for_cached_version(npm_bindings, repo, PACKAGE, version)
 
-    assert local_packument["dist-tags"]["latest"] == version
-    assert local_packument["versions"][version]["_id"] == f"{PACKAGE}@{version}"
-    # The tarball URL keeps pointing at the same place once served from local content.
-    assert local_packument["versions"][version]["dist"]["tarball"] == tarball_url
+    after = json.loads(http_get(f"{distro.base_url}{PACKAGE}"))
+    assert set(after["versions"]) >= set(before["versions"])
+    assert after["dist-tags"]["latest"] == before["dist-tags"]["latest"]
+    # The cached version keeps upstream's entry: same tarball URL, same integrity.
+    assert after["versions"][version]["dist"]["tarball"] == tarball_url
+    assert after["versions"][version]["dist"].get("integrity") == before["versions"][version][
+        "dist"
+    ].get("integrity")
 
-    content = npm_bindings.ContentPackagesApi.list(name=PACKAGE)
-    assert content.count == 1
 
+def _wait_for_cached_version(npm_bindings, repo, package, version, timeout=60):
+    """Wait until pull-through has added ``package@version`` to the repository.
 
-def _wait_for_cached_packument(http_get, distro, package, version, timeout=60):
-    """Poll the packument until it is served from the repository's own content.
-
-    Adding the pulled-through package to the repository is dispatched as a task, so
-    the handoff is not necessarily visible on the request right after the download.
+    Adding the pulled-through package is dispatched as a task, so it is not
+    necessarily visible on the request right after the download.
     """
     deadline = time.monotonic() + timeout
     while True:
-        packument = json.loads(http_get(f"{distro.base_url}{package}"))
-        if list(packument.get("versions", {})) == [version]:
-            return packument
+        latest = npm_bindings.RepositoriesNpmApi.read(repo.pulp_href).latest_version_href
+        cached = npm_bindings.ContentPackagesApi.list(name=package, repository_version=latest)
+        if any(package_unit.version == version for package_unit in cached.results):
+            return
         if time.monotonic() >= deadline:
             raise AssertionError(
-                f"Packument for '{package}' was not served from local content within "
-                f"{timeout}s: {sorted(packument.get('versions', {}))}"
+                f"'{package}@{version}' was not added to the repository within {timeout}s"
             )
         time.sleep(1)
+
+
+@pytest.mark.parallel
+def test_packument_lists_local_only_versions_next_to_upstream(
+    npm_remote_factory, npm_repository_factory, npm_distribution_factory, pulp_settings, http_get
+):
+    """A version held only in the repository is listed with upstream's, without moving a tag."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    remote = npm_remote_factory(url=NPM_FIXTURE_URL)
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href, remote=remote.pulp_href)
+    PACKAGE = "commander"
+    local_version = f"0.0.0-local.{uuid.uuid4().hex[:8]}"
+    publish_npm_versions(distro.base_path, PACKAGE, [local_version], domain=domain)
+
+    packument = json.loads(http_get(f"{distro.base_url}{PACKAGE}"))
+
+    assert local_version in packument["versions"]
+    assert len(packument["versions"]) > 1
+    assert packument["dist-tags"]["latest"] != local_version
+    tarball_url = packument["versions"][local_version]["dist"]["tarball"]
+    assert tarball_url.startswith(distro.base_url)
+    assert len(http_get(tarball_url)) > 0
+
+
+@pytest.mark.parallel
+def test_packument_served_from_local_content_when_remote_unreachable(
+    npm_remote_factory, npm_repository_factory, npm_distribution_factory, pulp_settings, http_get
+):
+    """Versions held in the repository stay installable while the remote is down."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    remote = npm_remote_factory(url="http://npm-unreachable-fixture/")
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href, remote=remote.pulp_href)
+    pkg_name = f"local-while-remote-down-{uuid.uuid4().hex[:8]}"
+    publish_npm_versions(distro.base_path, pkg_name, ["1.0.0"], domain=domain)
+
+    packument = json.loads(http_get(f"{distro.base_url}{pkg_name}"))
+
+    assert set(packument["versions"]) == {"1.0.0"}
+    assert packument["dist-tags"]["latest"] == "1.0.0"
 
 
 @pytest.mark.parallel

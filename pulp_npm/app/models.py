@@ -134,16 +134,43 @@ class NpmDistribution(Distribution, AutoAddObjPermsMixin):
             else Package.objects.none()
         )
 
-        if packages:
-            return self._packument_from_local_packages(name, packages)
+        local = self._packument_from_local_packages(name, packages) if packages else None
 
-        # A remote is attached directly (pull-through, no repository content yet):
-        # fetch it ourselves and rewrite tarball URLs, rather than returning None
-        # and letting pulpcore proxy that same remote with unmodified URLs.
-        if self.remote:
-            return self._packument_from_remote(name)
+        # With a remote attached, fetch the upstream packument ourselves and rewrite its
+        # tarball URLs, rather than returning None and letting pulpcore proxy that same
+        # remote with unmodified URLs. It is fetched even when local packages exist:
+        # pull-through adds packages to the repository one version at a time, so local
+        # content is usually a small part of what upstream lists.
+        upstream = self._packument_from_remote(name) if self.remote else None
 
-        return None
+        if local and upstream:
+            data = self._merge_packuments(local, upstream)
+        else:
+            # Either side alone; local only also covers an unreachable remote, so
+            # versions already held here stay installable while upstream is down.
+            data = local or upstream
+        if data is None:
+            return None
+        return Response(body=json.dumps(data), content_type="application/json")
+
+    @staticmethod
+    def _merge_packuments(local, upstream):
+        """Upstream's packument, plus the versions held only in this repository.
+
+        Upstream's entry is kept for every version it lists, including ones already
+        pulled through: it carries the full manifest and the integrity of the published
+        tarball, which is the tarball Pulp cached. Versions held only locally are added
+        so they stay installable, but they do not move a dist-tag; tags belong to the
+        upstream publisher.
+        """
+        merged = dict(upstream)
+        versions = dict(upstream.get("versions", {}))
+        for version, entry in local["versions"].items():
+            versions.setdefault(version, entry)
+        merged["versions"] = versions
+        if not merged.get("dist-tags"):
+            merged["dist-tags"] = local["dist-tags"]
+        return merged
 
     def _tarball_url_prefix(self):
         """Base URL under which this distribution serves package tarballs."""
@@ -190,10 +217,13 @@ class NpmDistribution(Distribution, AutoAddObjPermsMixin):
         )
         data["dist-tags"] = {"latest": latest}
 
-        return Response(body=json.dumps(data), content_type="application/json")
+        return data
 
     def _packument_from_remote(self, name):
-        """Fetch the upstream packument and rewrite dist.tarball to point at Pulp."""
+        """Fetch the upstream packument and rewrite dist.tarball to point at Pulp.
+
+        Returns None if the remote does not have the package or cannot be reached.
+        """
         remote = self.remote.cast()
         url = f"{remote.url.rstrip('/')}/{name}"
 
@@ -233,4 +263,4 @@ class NpmDistribution(Distribution, AutoAddObjPermsMixin):
             filename = tarball.split("/")[-1]
             version_data["dist"]["tarball"] = f"{prefix_url}{name}/-/{filename}"
 
-        return Response(body=json.dumps(data), content_type="application/json")
+        return data

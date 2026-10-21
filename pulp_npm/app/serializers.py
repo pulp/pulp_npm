@@ -160,6 +160,29 @@ class NpmPackageUploadSerializer(NpmPackageSerializer):
         ref_name = "NpmPackageUpload"
 
 
+class NpmRepositoryPackageVersionSerializer(serializers.Serializer):
+    """One stored version of a package."""
+
+    version = serializers.CharField(
+        help_text=_("Version string stored on the package."),
+    )
+
+
+class NpmRepositoryPackageSerializer(serializers.Serializer):
+    """One distinct package name and its stored versions."""
+
+    name = serializers.CharField(
+        help_text=_("npm package name, including scope when present (e.g. @types/node)."),
+    )
+    versions = NpmRepositoryPackageVersionSerializer(
+        many=True,
+        help_text=_(
+            "Stored version strings, newest first. A rebuild such as "
+            "1.0.0.rhlw-00001 is its own entry."
+        ),
+    )
+
+
 class NpmRemoteSerializer(core_serializers.RemoteSerializer):
     """
     A Serializer for NpmRemote.

@@ -111,12 +111,7 @@ def test_pull_through_with_repository_keeps_upstream_listing(
     http_get,
     delete_orphans_pre,
 ):
-    """A distro with both a repository and a remote keeps listing every upstream version.
-
-    Pulling a tarball through adds that one version to the repository. The packument
-    must still list everything upstream has, or every version not cached yet would
-    stop being installable through this distribution.
-    """
+    """Caching one version keeps every upstream version listed (#380)."""
     remote = npm_remote_factory(url=NPM_FIXTURE_URL)
     repo = npm_repository_factory()
     distro = npm_distribution_factory(repository=repo.pulp_href, remote=remote.pulp_href)
@@ -137,7 +132,7 @@ def test_pull_through_with_repository_keeps_upstream_listing(
     after = json.loads(http_get(f"{distro.base_url}{PACKAGE}"))
     assert set(after["versions"]) >= set(before["versions"])
     assert after["dist-tags"]["latest"] == before["dist-tags"]["latest"]
-    # The cached version keeps upstream's entry: same tarball URL, same integrity.
+    # The cached version keeps upstream's entry.
     assert after["versions"][version]["dist"]["tarball"] == tarball_url
     assert after["versions"][version]["dist"].get("integrity") == before["versions"][version][
         "dist"
@@ -145,11 +140,7 @@ def test_pull_through_with_repository_keeps_upstream_listing(
 
 
 def _wait_for_cached_version(npm_bindings, repo, package, version, timeout=60):
-    """Wait until pull-through has added ``package@version`` to the repository.
-
-    Adding the pulled-through package is dispatched as a task, so it is not
-    necessarily visible on the request right after the download.
-    """
+    """Wait for the pull-through task to add ``package@version`` to the repository."""
     deadline = time.monotonic() + timeout
     while True:
         latest = npm_bindings.RepositoriesNpmApi.read(repo.pulp_href).latest_version_href
@@ -164,10 +155,10 @@ def _wait_for_cached_version(npm_bindings, repo, package, version, timeout=60):
 
 
 @pytest.mark.parallel
-def test_packument_lists_local_only_versions_next_to_upstream(
+def test_packument_of_published_package_ignores_upstream(
     npm_remote_factory, npm_repository_factory, npm_distribution_factory, pulp_settings, http_get
 ):
-    """A version held only in the repository is listed with upstream's, without moving a tag."""
+    """A published name is served locally only, even if upstream has it too."""
     domain = "default" if pulp_settings.DOMAIN_ENABLED else None
     remote = npm_remote_factory(url=NPM_FIXTURE_URL)
     repo = npm_repository_factory()
@@ -178,9 +169,8 @@ def test_packument_lists_local_only_versions_next_to_upstream(
 
     packument = json.loads(http_get(f"{distro.base_url}{PACKAGE}"))
 
-    assert local_version in packument["versions"]
-    assert len(packument["versions"]) > 1
-    assert packument["dist-tags"]["latest"] != local_version
+    assert set(packument["versions"]) == {local_version}
+    assert packument["dist-tags"]["latest"] == local_version
     tarball_url = packument["versions"][local_version]["dist"]["tarball"]
     assert tarball_url.startswith(distro.base_url)
     assert len(http_get(tarball_url)) > 0
@@ -190,7 +180,7 @@ def test_packument_lists_local_only_versions_next_to_upstream(
 def test_packument_served_from_local_content_when_remote_unreachable(
     npm_remote_factory, npm_repository_factory, npm_distribution_factory, pulp_settings, http_get
 ):
-    """Versions held in the repository stay installable while the remote is down."""
+    """Local versions are served while the remote is down."""
     domain = "default" if pulp_settings.DOMAIN_ENABLED else None
     remote = npm_remote_factory(url="http://npm-unreachable-fixture/")
     repo = npm_repository_factory()

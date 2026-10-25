@@ -50,7 +50,7 @@ legacy_component_name: "pulp_npm"
 component_name: "npm"
 component_version: "${COMPONENT_VERSION}"
 pulp_env: {}
-pulp_settings: {"api_root": "/pulp/", "orphan_protection_time": 0}
+pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "api_root": "/pulp/", "orphan_protection_time": 0}
 pulp_scheme: "https"
 image:
   name: "pulp"

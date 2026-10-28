@@ -186,6 +186,42 @@ def test_publish_duplicate_is_idempotent(
 
 
 @pytest.mark.parallel
+def test_concurrent_publishes_to_one_repository_all_succeed(
+    npm_bindings,
+    npm_repository_factory,
+    npm_distribution_factory,
+    pulp_settings,
+):
+    """Publishes that arrive while another one holds the repository wait for their turn.
+
+    Workspace tools publish several packages at once and npm does not retry a refused
+    publish, so refusing every publish that overlaps another one would fail the release.
+    """
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+    names = [f"concurrent-{uuid.uuid4().hex[:8]}" for _ in range(8)]
+
+    async def publish_all():
+        return await asyncio.gather(
+            *(
+                _put_publish(
+                    _npm_publish_url(distro.base_path, name, domain=domain),
+                    _build_publish_body(name, "1.0.0", _build_npm_tgz(name=name)),
+                )
+                for name in names
+            )
+        )
+
+    results = _run(publish_all())
+    assert [status for status, _ in results] == [201] * len(names), results
+
+    repo = npm_bindings.RepositoriesNpmApi.read(repo.pulp_href)
+    ver = npm_bindings.RepositoriesNpmVersionsApi.read(repo.latest_version_href)
+    assert ver.content_summary.present["npm.package"]["count"] == len(names)
+
+
+@pytest.mark.parallel
 def test_publish_multiple_versions(
     npm_bindings,
     npm_repository_factory,

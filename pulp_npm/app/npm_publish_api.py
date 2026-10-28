@@ -1,9 +1,11 @@
 import base64
 import hashlib
+import time
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 from urllib.parse import unquote
 
+from django.conf import settings
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import Throttled
@@ -12,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pulpcore.plugin.access_policy import AccessPolicyFromDB
+from pulpcore.plugin.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.plugin.models import Artifact, ContentArtifact
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.util import get_domain
@@ -23,10 +26,33 @@ logger = getLogger(__name__)
 
 
 def _has_task_completed(task):
-    if task.state == "completed":
+    """
+    Wait for a dispatched task to finish and report how it ended.
+
+    The task runs right away when no other task holds the repository. Otherwise it waits in the
+    queue for a worker, and the publish request waits with it for up to NPM_PUBLISH_TASK_TIMEOUT
+    seconds, so concurrent publishes to one repository take turns instead of being refused.
+
+    Raises:
+        Exception: If an error occured during the task's runtime.
+        Throttled: If the task was canceled or did not finish within the timeout.
+    """
+    timeout = settings.NPM_PUBLISH_TASK_TIMEOUT
+    deadline = time.monotonic() + timeout
+    delay = 0.05
+    while task.state not in TASK_FINAL_STATES:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            # The task stays queued and still adds the package; a retried publish of the same
+            # version is accepted as well.
+            raise Throttled(wait=timeout)
+        time.sleep(min(delay, remaining))
+        delay = min(delay * 2, 1)
+        task.refresh_from_db()
+    if task.state == TASK_STATES.COMPLETED:
         task.delete()
         return True
-    elif task.state == "canceled":
+    elif task.state == TASK_STATES.CANCELED:
         raise Throttled()
     else:
         error = task.error
@@ -147,7 +173,7 @@ class NpmPublishView(APIView):
             aadd_and_remove,
             exclusive_resources=[repository],
             immediate=True,
-            deferred=False,
+            deferred=True,
             kwargs={
                 "repository_pk": str(repository.pk),
                 "add_content_units": [str(content.pk)],

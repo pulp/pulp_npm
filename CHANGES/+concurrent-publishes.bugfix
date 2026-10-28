@@ -1,0 +1,3 @@
+Concurrent publishes to the same repository no longer fail with HTTP 429. A publish that arrives
+while another one holds the repository waits for its turn, for up to `NPM_PUBLISH_TASK_TIMEOUT`
+seconds (30 by default).

@@ -117,6 +117,14 @@ You can also set the registry per-scope in `.npmrc`:
 //pulp.example.com/npm/default/my-npm-repo/:_auth=YWRtaW46cGFzc3dvcmQ=
 ```
 
+## Concurrent Publishes
+
+Each published package is added to the repository by a task that holds the repository while it
+runs. A publish that arrives while another one holds it waits for its turn, for up to
+`NPM_PUBLISH_TASK_TIMEOUT` seconds (30 by default), and only then answers `429`. npm, yarn and
+pnpm do not retry a refused publish, so raise the timeout if many packages are published into one
+repository at the same time, for example by a workspace publishing all its packages.
+
 ## Verify Published Packages
 
 ### Check the repository

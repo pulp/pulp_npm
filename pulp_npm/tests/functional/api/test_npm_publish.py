@@ -27,9 +27,9 @@ def _pulp_auth():
     )
 
 
-def _build_npm_tgz(name="test-pkg", version="1.0.0"):
+def _build_npm_tgz(name="test-pkg", version="1.0.0", **manifest):
     """Build a minimal npm .tgz tarball in-memory and return bytes."""
-    package_json = json.dumps({"name": name, "version": version}).encode()
+    package_json = json.dumps({"name": name, "version": version, **manifest}).encode()
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
         info = tarfile.TarInfo(name="package/package.json")
@@ -183,6 +183,35 @@ def test_publish_duplicate_is_idempotent(
     s2, _ = _run(_put_publish(url, body))
     assert s1 == 201
     assert s2 == 201
+
+
+@pytest.mark.parallel
+def test_publish_duplicate_with_different_tarball_conflicts(
+    npm_bindings,
+    npm_repository_factory,
+    npm_distribution_factory,
+    monitor_task,
+    pulp_settings,
+):
+    """Re-publishing a version with a different tarball should return 409 and keep the original."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+
+    pkg_name = f"dup-diff-{uuid.uuid4().hex[:8]}"
+    version = "1.0.0"
+    url = _npm_publish_url(distro.base_path, pkg_name, domain=domain)
+
+    original = _build_npm_tgz(name=pkg_name, version=version)
+    s1, _ = _run(_put_publish(url, _build_publish_body(pkg_name, version, original)))
+    changed = _build_npm_tgz(name=pkg_name, version=version, description="changed")
+    s2, text = _run(_put_publish(url, _build_publish_body(pkg_name, version, changed)))
+    assert s1 == 201
+    assert s2 == 409, f"Expected 409, got {s2}: {text}"
+
+    repo = npm_bindings.RepositoriesNpmApi.read(repo.pulp_href)
+    ver = npm_bindings.RepositoriesNpmVersionsApi.read(repo.latest_version_href)
+    assert ver.content_summary.present["npm.package"]["count"] == 1
 
 
 @pytest.mark.parallel

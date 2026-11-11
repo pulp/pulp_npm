@@ -5,15 +5,19 @@ import io
 import json
 import tarfile
 import uuid
+from urllib.parse import urljoin
 
 import pytest
 
 from pulpcore.client.pulp_npm.exceptions import ApiException
 
 
-def _build_npm_tgz(name="test-pkg", version="1.0.0"):
+def _build_npm_tgz(name="test-pkg", version="1.0.0", extra_manifest=None):
     """Build a minimal npm .tgz tarball in-memory and return (bytes, name, version)."""
-    package_json = json.dumps({"name": name, "version": version}).encode()
+    manifest = {"name": name, "version": version}
+    if extra_manifest:
+        manifest.update(extra_manifest)
+    package_json = json.dumps(manifest).encode()
 
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
@@ -247,3 +251,67 @@ def test_create_without_file_or_artifact_fails(npm_bindings):
     with pytest.raises(ApiException) as exc:
         npm_bindings.ContentPackagesApi.create()
     assert exc.value.status in (400, 422)
+
+
+@pytest.mark.parallel
+def test_uploaded_package_metadata_is_served_in_registry_document(
+    npm_bindings,
+    npm_repository_factory,
+    npm_distribution_factory,
+    monitor_task,
+    http_get,
+    tmp_path,
+):
+    """Content created via the synchronous upload API must carry its manifest."""
+    pkg_name = f"upload-meta-{uuid.uuid4().hex[:8]}"
+    version = "1.0.0"
+    extra = {"dependencies": {"left-pad": "^1.3.0"}, "engines": {"node": ">=20"}}
+    tgz_bytes, _, _ = _build_npm_tgz(name=pkg_name, version=version, extra_manifest=extra)
+    tgz_path = _write_tgz_to_file(tmp_path, tgz_bytes)
+
+    repo = npm_repository_factory()
+    content = npm_bindings.ContentPackagesApi.upload(file=tgz_path)
+    monitor_task(
+        npm_bindings.RepositoriesNpmApi.modify(
+            repo.pulp_href, {"add_content_units": [content.pulp_href]}
+        ).task
+    )
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+
+    document = json.loads(http_get(urljoin(distro.base_url, pkg_name)))
+    entry = document["versions"][version]
+    assert entry["dependencies"] == {"left-pad": "^1.3.0"}
+    assert entry["engines"] == {"node": ">=20"}
+    assert entry["dist"]["tarball"].startswith(distro.base_url)
+    assert entry["dist"]["integrity"].startswith("sha512-")
+
+
+@pytest.mark.parallel
+def test_created_package_metadata_is_served_in_registry_document(
+    npm_bindings,
+    npm_repository_factory,
+    npm_distribution_factory,
+    monitor_task,
+    http_get,
+    tmp_path,
+):
+    """Content created via the async API must carry its manifest."""
+    pkg_name = f"create-meta-{uuid.uuid4().hex[:8]}"
+    version = "1.0.0"
+    extra = {"dependencies": {"left-pad": "^1.3.0"}, "engines": {"node": ">=20"}}
+    tgz_bytes, _, _ = _build_npm_tgz(name=pkg_name, version=version, extra_manifest=extra)
+    tgz_path = _write_tgz_to_file(tmp_path, tgz_bytes)
+
+    repo = npm_repository_factory()
+    task = monitor_task(
+        npm_bindings.ContentPackagesApi.create(file=tgz_path, repository=repo.pulp_href).task
+    )
+    assert task.state == "completed"
+
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+    document = json.loads(http_get(urljoin(distro.base_url, pkg_name)))
+    entry = document["versions"][version]
+    assert entry["dependencies"] == {"left-pad": "^1.3.0"}
+    assert entry["engines"] == {"node": ">=20"}
+    assert entry["dist"]["tarball"].startswith(distro.base_url)
+    assert entry["dist"]["integrity"].startswith("sha512-")

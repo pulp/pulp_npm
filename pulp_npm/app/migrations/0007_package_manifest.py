@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("npm", "0006_add_rbac_permissions"),
     ]
@@ -14,5 +13,15 @@ class Migration(migrations.Migration):
             model_name="package",
             name="manifest",
             field=models.JSONField(blank=True, default=dict),
+        ),
+        migrations.AddField(
+            model_name="package",
+            name="integrity",
+            field=models.CharField(blank=True, max_length=255, null=True),
+        ),
+        migrations.AddField(
+            model_name="package",
+            name="shasum",
+            field=models.CharField(blank=True, max_length=40, null=True),
         ),
     ]

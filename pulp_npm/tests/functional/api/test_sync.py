@@ -1,6 +1,9 @@
 # coding=utf-8
 """Tests that sync npm plugin repositories."""
 
+import json
+from urllib.request import urlopen
+
 import pytest
 
 from pulpcore.client.pulp_npm import RepositorySyncURL
@@ -90,3 +93,36 @@ def test_sync_package_with_dependencies(
     assert latest_version.content_summary.present["npm.package"]["count"] > 1
     assert latest_version.content_summary.added["npm.package"]["count"] > 1
     assert synced_repo.latest_version_href.endswith("/1/")
+
+
+@pytest.mark.parallel
+def test_on_demand_sync_serves_integrity_before_download(
+    npm_bindings,
+    npm_remote_factory,
+    npm_repository_factory,
+    npm_distribution_factory,
+    monitor_task,
+):
+    """A deferred package carries its upstream integrity before its tarball is fetched."""
+    remote = npm_remote_factory(url="https://registry.npmjs.org/is-odd/3.0.1", policy="on_demand")
+    repository = npm_repository_factory(remote=remote.pulp_href)
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(repository.pulp_href, {}).task)
+    distribution = npm_distribution_factory(repository=repository.pulp_href)
+
+    with urlopen(f"{distribution.base_url}is-odd") as response:
+        assert response.status == 200
+        document = json.load(response)
+    dist = document["versions"]["3.0.1"]["dist"]
+    assert dist["integrity"].startswith("sha512-")
+    assert len(dist["shasum"]) == 40
+
+    with urlopen(dist["tarball"]) as response:
+        assert response.status == 200
+        assert response.read()
+
+    content = next(
+        item
+        for item in npm_bindings.ContentPackagesApi.list(name="is-odd").results
+        if item.version == "3.0.1"
+    )
+    assert content.artifact is not None

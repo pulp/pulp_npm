@@ -359,3 +359,114 @@ def test_published_package_metadata_is_served_in_registry_document(
     # or a publisher could point other clients at a tarball of their choosing.
     assert entry["dist"]["tarball"].startswith(distro.base_url)
     assert entry["dist"]["integrity"].startswith("sha512-")
+    # shasum is optional; it is only present when sha1 is an allowed checksum.
+    if "shasum" in entry["dist"]:
+        assert len(entry["dist"]["shasum"]) == 40
+
+
+@pytest.mark.parallel
+def test_publish_metadata_is_read_from_tarball(
+    npm_repository_factory,
+    npm_distribution_factory,
+    pulp_settings,
+):
+    """The publish request cannot override the tarball's own metadata."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+
+    pkg_name = f"meta-src-{uuid.uuid4().hex[:8]}"
+    version = "1.0.0"
+    tarball_manifest = {"dependencies": {"from-tarball": "^1.0.0"}}
+    request_manifest = {"dependencies": {"from-request": "^6.6.6"}}
+    tgz = _build_npm_tgz(name=pkg_name, version=version, extra_manifest=tarball_manifest)
+    body = _build_publish_body(pkg_name, version, tgz, extra_manifest=request_manifest)
+
+    url = _npm_publish_url(distro.base_path, pkg_name, domain=domain)
+    status, response_text = _run(_put_publish(url, body))
+    assert status == 201, f"Expected 201, got {status}: {response_text}"
+
+    status, text = _run(_get(f"{distro.base_url}{pkg_name}"))
+    assert status == 200, text
+    entry = json.loads(text)["versions"][version]
+    assert entry["dependencies"] == {"from-tarball": "^1.0.0"}
+    assert "from-request" not in entry["dependencies"]
+
+
+@pytest.mark.parallel
+def test_republish_with_different_content_is_rejected(
+    npm_repository_factory,
+    npm_distribution_factory,
+    pulp_settings,
+):
+    """A published name@version is immutable; conflicting bytes are rejected."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+
+    pkg_name = f"meta-immutable-{uuid.uuid4().hex[:8]}"
+    version = "1.0.0"
+    original_manifest = {"dependencies": {"left-pad": "^1.3.0"}}
+    original_tgz = _build_npm_tgz(name=pkg_name, version=version, extra_manifest=original_manifest)
+    original_body = _build_publish_body(
+        pkg_name, version, original_tgz, extra_manifest=original_manifest
+    )
+    url = _npm_publish_url(distro.base_path, pkg_name, domain=domain)
+
+    status, response_text = _run(_put_publish(url, original_body))
+    assert status == 201, f"Expected 201, got {status}: {response_text}"
+
+    # Same name@version, different bytes: must be rejected, not overwritten.
+    poisoned_manifest = {"dependencies": {"evil-pkg": "^6.6.6"}}
+    poisoned_tgz = _build_npm_tgz(name=pkg_name, version=version, extra_manifest=poisoned_manifest)
+    poisoned_body = _build_publish_body(
+        pkg_name, version, poisoned_tgz, extra_manifest=poisoned_manifest
+    )
+
+    status, response_text = _run(_put_publish(url, poisoned_body))
+    assert status == 400, f"Expected 400, got {status}: {response_text}"
+
+    status, text = _run(_get(f"{distro.base_url}{pkg_name}"))
+    assert status == 200, text
+    entry = json.loads(text)["versions"][version]
+    assert entry["dependencies"] == original_manifest["dependencies"]
+
+    # Re-publishing the exact same bytes stays idempotent.
+    status, response_text = _run(_put_publish(url, original_body))
+    assert status == 201, f"Expected 201, got {status}: {response_text}"
+
+
+@pytest.mark.parallel
+def test_republish_to_deferred_content_is_rejected(
+    npm_bindings,
+    npm_remote_factory,
+    npm_repository_factory,
+    npm_distribution_factory,
+    monitor_task,
+    pulp_settings,
+):
+    """A publish must not replace the expected bytes of deferred synced content."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+
+    remote = npm_remote_factory(url="https://registry.npmjs.org/is-even/1.0.0", policy="on_demand")
+    synced_repo = npm_repository_factory(remote=remote.pulp_href)
+    monitor_task(npm_bindings.RepositoriesNpmApi.sync(synced_repo.pulp_href, {}).task)
+    synced_distro = npm_distribution_factory(repository=synced_repo.pulp_href)
+
+    status, text = _run(_get(f"{synced_distro.base_url}is-even"))
+    assert status == 200, text
+    original_integrity = json.loads(text)["versions"]["1.0.0"]["dist"]["integrity"]
+
+    publish_repo = npm_repository_factory()
+    publish_distro = npm_distribution_factory(repository=publish_repo.pulp_href)
+    conflicting_manifest = {"description": "conflicting publish"}
+    tgz = _build_npm_tgz(name="is-even", version="1.0.0", extra_manifest=conflicting_manifest)
+    body = _build_publish_body("is-even", "1.0.0", tgz, extra_manifest=conflicting_manifest)
+
+    url = _npm_publish_url(publish_distro.base_path, "is-even", domain=domain)
+    status, response_text = _run(_put_publish(url, body))
+    assert status == 400, f"Expected 400, got {status}: {response_text}"
+
+    status, text = _run(_get(f"{synced_distro.base_url}is-even"))
+    assert status == 200, text
+    assert json.loads(text)["versions"]["1.0.0"]["dist"]["integrity"] == original_integrity

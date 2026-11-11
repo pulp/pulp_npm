@@ -1,4 +1,3 @@
-import base64
 import json
 from logging import getLogger
 
@@ -18,38 +17,16 @@ from pulpcore.plugin.models import (
 from pulpcore.plugin.util import get_domain_pk
 
 from .utils import (
+    PACKUMENT_MANIFEST_FIELDS,
     extract_npm_metadata_from_artifact,
     extract_package_info,
+    has_install_script,
+    sanitize_manifest,
+    sri_from_artifact,
     urlpath_sanitize,
 )
 
 logger = getLogger(__name__)
-
-#: Manifest fields copied from a package's own ``package.json`` into the registry
-#: document. A client resolving a dependency tree reads them from here rather than
-#: from the tarball, which it has not downloaded yet -- omitting them makes an
-#: install silently skip the package's dependencies. Restricted to an explicit
-#: allow-list so a package cannot inject arbitrary keys (notably ``dist``, which
-#: is generated below and must not be attacker-controlled).
-PACKUMENT_MANIFEST_FIELDS = (
-    "description",
-    "license",
-    "main",
-    "bin",
-    "scripts",
-    "engines",
-    "os",
-    "cpu",
-    "dependencies",
-    "devDependencies",
-    "peerDependencies",
-    "peerDependenciesMeta",
-    "optionalDependencies",
-    "bundleDependencies",
-    "bundledDependencies",
-    "deprecated",
-    "hasInstallScript",
-)
 
 
 class Package(Content):
@@ -66,6 +43,11 @@ class Package(Content):
     name = models.CharField(max_length=214)
     version = models.CharField(max_length=256)
     manifest = models.JSONField(default=dict, blank=True)
+    #: Expected tarball integrity (SRI sha512) retained for deferred content,
+    #: where no local Artifact exists yet. Replaced by the computed value once
+    #: the artifact has been downloaded.
+    integrity = models.CharField(max_length=255, null=True, blank=True)
+    shasum = models.CharField(max_length=40, null=True, blank=True)
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @property
@@ -87,13 +69,19 @@ class Package(Content):
         manifest = {}
         try:
             metadata = extract_npm_metadata_from_artifact(artifact)
-            manifest = metadata.get("manifest") or {}
+            manifest = sanitize_manifest(metadata.get("manifest") or {})
             name = name or metadata.get("name")
             version = version or metadata.get("version")
         except ValueError as exc:
             logger.warning("Could not read package.json from %s: %s", relative_path, exc)
 
-        return Package(name=name, version=version, manifest=manifest)
+        return Package(
+            name=name,
+            version=version,
+            manifest=manifest,
+            integrity=sri_from_artifact(artifact),
+            shasum=artifact.sha1 or None,
+        )
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -216,20 +204,27 @@ class NpmDistribution(Distribution, AutoAddObjPermsMixin):
 
             dist = {"tarball": tarball_url}
             artifact = artifact_by_content.get(package.pk)
-            if artifact:
-                # `integrity` is what a client verifies the download against; without
-                # it npm accepts whatever bytes the tarball URL happens to return.
-                if artifact.sha512:
-                    digest = base64.b64encode(bytes.fromhex(artifact.sha512)).decode()
-                    dist["integrity"] = f"sha512-{digest}"
-                if artifact.sha1:
-                    dist["shasum"] = artifact.sha1
+            # Prefer checksums computed from the stored bytes. Deferred content
+            # has no artifact yet, so fall back to the integrity captured from
+            # the upstream registry document.
+            integrity = sri_from_artifact(artifact) if artifact else None
+            shasum = artifact.sha1 if artifact else None
+            integrity = integrity or package.integrity
+            shasum = shasum or package.shasum
+            if integrity:
+                dist["integrity"] = integrity
+            if shasum:
+                dist["shasum"] = shasum
 
             version_data = {
                 key: package.manifest[key]
                 for key in PACKUMENT_MANIFEST_FIELDS
                 if key in (package.manifest or {})
             }
+            # Derive the flag on serve as well, so content stored before this
+            # change still reports install scripts correctly.
+            if "scripts" in version_data:
+                version_data["hasInstallScript"] = has_install_script(version_data)
             version_data.update(
                 {
                     "name": package.name,
@@ -244,10 +239,14 @@ class NpmDistribution(Distribution, AutoAddObjPermsMixin):
 
         parsed = {v: semver.Version.parse(v) for v in versions if semver.Version.is_valid(v)}
         stable_versions = [v for v, parsed_v in parsed.items() if not parsed_v.prerelease]
-        latest = (
-            max(stable_versions, key=parsed.get) if stable_versions else max(parsed, key=parsed.get)
-        )
+        if parsed:
+            candidates = stable_versions or list(parsed)
+            latest = max(candidates, key=parsed.get)
+        else:
+            # Some registries publish non-semver versions. Keep the registry
+            # document usable instead of raising on an empty version set.
+            latest = versions[-1]
         data["dist-tags"] = {"latest": latest}
 
         serialized_data = json.dumps(data)
-        return Response(body=serialized_data)
+        return Response(body=serialized_data, content_type="application/json")

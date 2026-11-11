@@ -13,6 +13,7 @@ from pulpcore.plugin.stages import (
 )
 
 from pulp_npm.app.models import NpmRemote, Package
+from pulp_npm.app.utils import parse_sri, sanitize_manifest, validate_upstream_integrity
 
 log = logging.getLogger(__name__)
 
@@ -105,11 +106,27 @@ class NpmFirstStage(Stage):
 
         for pkg in data:
             # The upstream registry document already carries this version's own
-            # metadata; carry it across so a mirrored package resolves its
-            # dependencies exactly as it would upstream.
-            manifest = {k: v for k, v in pkg.items() if not k.startswith("_") and k != "dist"}
-            package = Package(name=pkg["name"], version=pkg["version"], manifest=manifest)
+            # metadata; carry an allow-listed, bounded copy across so a mirrored
+            # package resolves its dependencies exactly as it would upstream.
+            manifest = sanitize_manifest(pkg)
+            integrity, shasum = validate_upstream_integrity(pkg.get("dist"))
+            package = Package(
+                name=pkg["name"],
+                version=pkg["version"],
+                manifest=manifest,
+                integrity=integrity,
+                shasum=shasum,
+            )
             artifact = Artifact()  # make Artifact in memory-only
+            # Seed the expected digests so pulpcore validates the tarball on
+            # immediate download, and stores them on the RemoteArtifact for
+            # deferred downloads.
+            if integrity and (parsed_integrity := parse_sri(integrity)):
+                algorithm, digest = parsed_integrity
+                if algorithm in Artifact.DIGEST_FIELDS:
+                    setattr(artifact, algorithm, digest)
+            if shasum and "sha1" in Artifact.DIGEST_FIELDS:
+                artifact.sha1 = shasum
             url = pkg["dist"]["tarball"]
             da = DeclarativeArtifact(
                 artifact=artifact,

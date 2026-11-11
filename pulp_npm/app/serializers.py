@@ -1,4 +1,5 @@
 from gettext import gettext as _
+from logging import getLogger
 
 from django.db import DatabaseError
 from rest_framework import serializers
@@ -8,7 +9,76 @@ from pulpcore.plugin import serializers as core_serializers
 from pulpcore.plugin.util import get_domain_pk
 
 from . import models
-from .utils import extract_npm_metadata_from_artifact
+from .utils import extract_npm_metadata_from_artifact, sanitize_manifest, sri_from_artifact
+
+logger = getLogger(__name__)
+
+
+def _apply_artifact_metadata(data, artifact):
+    """Populate ``name``, ``version`` and ``manifest`` from the uploaded tarball.
+
+    The tarball's ``package.json`` is authoritative for the *manifest*. The
+    generic content upload API has always allowed callers to supply ``name`` and
+    ``version`` explicitly (overriding what the tarball says); keep that
+    behaviour for compatibility. The publish API is stricter and validates the
+    identity itself. When the tarball cannot be read and explicit values were
+    supplied, keep the old degraded behaviour (content is created without a
+    manifest) instead of rejecting the upload; otherwise raise, as before.
+    """
+    provided_name = data.get("name")
+    provided_version = data.get("version")
+    data["integrity"] = sri_from_artifact(artifact)
+    data["shasum"] = getattr(artifact, "sha1", None) or None
+
+    try:
+        metadata = extract_npm_metadata_from_artifact(artifact)
+    except ValueError as e:
+        if provided_name and provided_version:
+            logger.warning(
+                "Could not read package.json from uploaded tarball (%s); "
+                "creating content without a manifest.",
+                e,
+            )
+            return
+        raise serializers.ValidationError(
+            _(
+                "Could not extract metadata from npm tarball: {}. "
+                "Please provide 'name' and 'version' explicitly."
+            ).format(e)
+        )
+
+    if provided_name and provided_name != metadata["name"]:
+        logger.warning(
+            "Uploaded tarball package.json name %r differs from the explicit name %r.",
+            metadata["name"],
+            provided_name,
+        )
+    else:
+        data["name"] = metadata["name"]
+
+    if provided_version and provided_version != metadata["version"]:
+        logger.warning(
+            "Uploaded tarball package.json version %r differs from the explicit version %r.",
+            metadata["version"],
+            provided_version,
+        )
+    else:
+        data["version"] = metadata["version"]
+
+    try:
+        data["manifest"] = sanitize_manifest(metadata.get("manifest") or {}, strict=True)
+    except ValueError as e:
+        if provided_name and provided_version:
+            logger.warning(
+                "Could not sanitize package.json from uploaded tarball (%s); "
+                "creating content without a manifest.",
+                e,
+            )
+            data["manifest"] = {}
+        else:
+            raise serializers.ValidationError(
+                _("Could not sanitize metadata from npm tarball: {}").format(e)
+            )
 
 
 class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerializer):
@@ -47,25 +117,7 @@ class NpmPackageSerializer(core_serializers.SingleArtifactContentUploadSerialize
                 _("An artifact is required to create npm package content.")
             )
 
-        needs_name = "name" not in data or not data["name"]
-        needs_version = "version" not in data or not data["version"]
-
-        if needs_name or needs_version:
-            try:
-                metadata = extract_npm_metadata_from_artifact(artifact)
-            except ValueError as e:
-                raise serializers.ValidationError(
-                    _(
-                        "Could not extract metadata from npm tarball: {}. "
-                        "Please provide 'name' and 'version' explicitly."
-                    ).format(e)
-                )
-            if needs_name:
-                data["name"] = metadata["name"]
-            if needs_version:
-                data["version"] = metadata["version"]
-            if metadata.get("manifest"):
-                data["manifest"] = metadata["manifest"]
+        _apply_artifact_metadata(data, artifact)
 
         if "relative_path" not in data or not data["relative_path"]:
             base_name = data["name"].split("/")[-1] if "/" in data["name"] else data["name"]
@@ -133,25 +185,7 @@ class NpmPackageUploadSerializer(NpmPackageSerializer):
                 _("A file or artifact is required to upload npm package content.")
             )
 
-        needs_name = "name" not in data or not data["name"]
-        needs_version = "version" not in data or not data["version"]
-
-        if needs_name or needs_version:
-            try:
-                metadata = extract_npm_metadata_from_artifact(artifact)
-            except ValueError as e:
-                raise serializers.ValidationError(
-                    _(
-                        "Could not extract metadata from npm tarball: {}. "
-                        "Please provide 'name' and 'version' explicitly."
-                    ).format(e)
-                )
-            if needs_name:
-                data["name"] = metadata["name"]
-            if needs_version:
-                data["version"] = metadata["version"]
-            if metadata.get("manifest"):
-                data["manifest"] = metadata["manifest"]
+        _apply_artifact_metadata(data, artifact)
 
         if "relative_path" not in data or not data["relative_path"]:
             base_name = data["name"].split("/")[-1] if "/" in data["name"] else data["name"]

@@ -8,6 +8,7 @@ import os
 import tarfile
 import uuid
 from urllib.parse import urljoin
+from urllib.request import urlopen
 
 import aiohttp
 import pytest
@@ -152,3 +153,43 @@ def test_dist_tags_latest_falls_back_to_prerelease(
 
     content_metadata = json.loads(http_get(urljoin(distro.base_url, pkg_name)))
     assert content_metadata["dist-tags"]["latest"] == "1.0.0-beta.1"
+
+
+@pytest.mark.parallel
+def test_dist_tags_latest_with_no_valid_semver(
+    npm_bindings,
+    npm_repository_factory,
+    npm_distribution_factory,
+    pulp_settings,
+    http_get,
+):
+    """A non-semver version must not make the registry document fail."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+
+    pkg_name = f"non-semver-{uuid.uuid4().hex[:8]}"
+    _publish_versions(distro.base_path, pkg_name, ["release-candidate"], domain=domain)
+
+    content_metadata = json.loads(http_get(urljoin(distro.base_url, pkg_name)))
+    assert content_metadata["dist-tags"]["latest"] == "release-candidate"
+
+
+@pytest.mark.parallel
+def test_packument_is_served_as_json(
+    npm_bindings,
+    npm_repository_factory,
+    npm_distribution_factory,
+    pulp_settings,
+):
+    """The registry document must carry a JSON media type for clients and caches."""
+    domain = "default" if pulp_settings.DOMAIN_ENABLED else None
+    repo = npm_repository_factory()
+    distro = npm_distribution_factory(repository=repo.pulp_href)
+
+    pkg_name = f"json-type-{uuid.uuid4().hex[:8]}"
+    _publish_versions(distro.base_path, pkg_name, ["1.0.0"], domain=domain)
+
+    with urlopen(urljoin(distro.base_url, pkg_name)) as response:
+        assert response.status == 200
+        assert response.headers.get_content_type() == "application/json"

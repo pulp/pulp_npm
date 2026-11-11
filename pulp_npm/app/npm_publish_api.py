@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile
 from urllib.parse import unquote
 
 from django.db import IntegrityError
+from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import Throttled
 from rest_framework.parsers import JSONParser
@@ -12,12 +13,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pulpcore.plugin.access_policy import AccessPolicyFromDB
-from pulpcore.plugin.models import Artifact, ContentArtifact
+from pulpcore.plugin.models import Artifact, ContentArtifact, RemoteArtifact
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.util import get_domain
 
 from .models import NpmDistribution, Package
 from .tasks.publish import aadd_and_remove
+from .utils import (
+    extract_npm_metadata_from_artifact,
+    parse_sri,
+    sanitize_manifest,
+    sri_from_artifact,
+)
 
 logger = getLogger(__name__)
 
@@ -37,6 +44,92 @@ def _has_task_completed(task):
 def _decode_package_name(raw_name):
     """Decode URL-encoded scoped package names (e.g. ``@scope%2Fname`` -> ``@scope/name``)."""
     return unquote(raw_name)
+
+
+_EXPECTED_DIGEST_FIELDS = ("sha512", "sha384", "sha256", "sha224", "sha1")
+
+
+def _expected_digests(content, content_artifact):
+    """Collect every checksum known for an existing content unit."""
+    expected = {}
+
+    def add(algorithm, value):
+        expected.setdefault(algorithm, set()).add(value.lower())
+
+    if content.integrity:
+        parsed = parse_sri(content.integrity)
+        if parsed:
+            add(*parsed)
+    if content.shasum:
+        add("sha1", content.shasum)
+
+    if content_artifact is not None:
+        for remote_artifact in RemoteArtifact.objects.filter(content_artifact=content_artifact):
+            for field in _EXPECTED_DIGEST_FIELDS:
+                value = getattr(remote_artifact, field, None)
+                if value:
+                    add(field, value)
+
+    return expected
+
+
+def _artifact_digest(artifact, algorithm, tarball_bytes):
+    value = getattr(artifact, algorithm, None)
+    if value:
+        return value.lower()
+    if tarball_bytes is not None:
+        try:
+            return hashlib.new(algorithm, tarball_bytes).hexdigest()
+        except ValueError:
+            return None
+    return None
+
+
+def _artifact_matches(artifact, expected, tarball_bytes):
+    if not expected:
+        return False
+    for algorithm, values in expected.items():
+        digest = _artifact_digest(artifact, algorithm, tarball_bytes)
+        if digest is None or any(value != digest for value in values):
+            return False
+    return True
+
+
+def _remove_orphan_artifact(artifact):
+    if ContentArtifact.objects.filter(artifact=artifact).exists():
+        return
+    try:
+        artifact.delete()
+    except ProtectedError:
+        # A concurrent request attached it after the check.
+        pass
+
+
+def _reject_publish(artifact, message, status=400):
+    _remove_orphan_artifact(artifact)
+    return Response({"error": message}, status=status)
+
+
+def _validate_against_existing(content, content_artifact, artifact, tarball_bytes):
+    """Return an error message, or attach the artifact when it is verified."""
+    if content_artifact is not None and content_artifact.artifact is not None:
+        if content_artifact.artifact.sha256 != artifact.sha256:
+            return f"{content.name}@{content.version} already exists with different content"
+        return None
+
+    expected = _expected_digests(content, content_artifact)
+    if not expected:
+        return (
+            f"{content.name}@{content.version} already exists and has no recorded "
+            "integrity; refusing to attach different content"
+        )
+    if not _artifact_matches(artifact, expected, tarball_bytes):
+        return f"{content.name}@{content.version} already exists with different content"
+
+    if content_artifact is not None and content_artifact.artifact is None:
+        content_artifact.artifact = artifact
+        content_artifact.save(update_fields=["artifact"])
+    return None
 
 
 class NpmPublishView(APIView):
@@ -99,6 +192,8 @@ class NpmPublishView(APIView):
         versions = body.get("versions")
         if not versions or not isinstance(versions, dict):
             return Response({"error": "Missing or invalid 'versions' in request body"}, status=400)
+        if len(versions) != 1:
+            return Response({"error": "Publish body must contain exactly one version"}, status=400)
 
         attachments = body.get("_attachments")
         if not attachments or not isinstance(attachments, dict):
@@ -124,21 +219,49 @@ class NpmPublishView(APIView):
         name = package_name
         version = version_key
 
-        # `npm publish` sends the package's own metadata for this version; keep it
-        # so the registry document can carry the dependency list (without it a
-        # client installs this package and silently skips its dependencies).
-        manifest = versions.get(version_key) or {}
-        if not isinstance(manifest, dict):
-            manifest = {}
+        # The tarball's ``package.json`` is the authoritative source of the
+        # package's own metadata. Never trust the publish request for it: npm
+        # sends the same document, but any client can send anything.
+        try:
+            metadata = extract_npm_metadata_from_artifact(artifact)
+        except ValueError as exc:
+            return _reject_publish(artifact, f"Invalid npm tarball: {exc}")
+
+        if metadata["name"] != name:
+            return _reject_publish(artifact, "Package name in package.json does not match URL")
+        if metadata["version"] != version:
+            return _reject_publish(artifact, "Package version in package.json does not match URL")
 
         try:
-            content = Package(name=name, version=version, manifest=manifest)
+            manifest = sanitize_manifest(metadata.get("manifest") or {}, strict=True)
+        except ValueError as exc:
+            return _reject_publish(artifact, str(exc))
+
+        request_manifest = sanitize_manifest(versions.get(version_key) or {})
+        if request_manifest and request_manifest != manifest:
+            logger.warning(
+                "Publish metadata for %s@%s disagrees with the tarball; using tarball metadata",
+                name,
+                version,
+            )
+
+        try:
+            content = Package(
+                name=name,
+                version=version,
+                manifest=manifest,
+                integrity=sri_from_artifact(artifact),
+                shasum=artifact.sha1 or None,
+            )
             content.save()
         except IntegrityError:
             content = Package.objects.get(name=name, version=version, _pulp_domain=domain)
-            if manifest and content.manifest != manifest:
-                content.manifest = manifest
-                content.save(update_fields=["manifest"])
+            existing_ca = (
+                ContentArtifact.objects.filter(content=content).select_related("artifact").first()
+            )
+            error = _validate_against_existing(content, existing_ca, artifact, tarball_bytes)
+            if error:
+                return _reject_publish(artifact, error)
 
         relative_path = content.relative_path
         try:
@@ -149,9 +272,9 @@ class NpmPublishView(APIView):
             )
         except IntegrityError:
             ca = ContentArtifact.objects.get(content=content, relative_path=relative_path)
-            if not ca.artifact:
-                ca.artifact = artifact
-                ca.save()
+            error = _validate_against_existing(content, ca, artifact, tarball_bytes)
+            if error:
+                return _reject_publish(artifact, error)
 
         dispatched_task = dispatch(
             aadd_and_remove,

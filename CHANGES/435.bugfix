@@ -1,1 +1,0 @@
-Serve validated npm package metadata and tarball integrity from the stored tarball, including deferred content, and reject conflicting republishes so clients resolve dependencies and verify downloads.

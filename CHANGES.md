@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 0.11.0 (2026-11-11) {: #0.11.0 }
+
+#### Features {: #0.11.0-feature }
+
+- Added Role-Based Access Control (RBAC) to all npm viewsets and the npm publish API.
+  Users can now be assigned creator, owner, or viewer roles on repositories, remotes,
+  and distributions. The npm publish endpoint requires ``modify_npmrepository``
+  permission on the backing repository.
+  [#387](https://github.com/pulp/pulp_npm/issues/387)
+- Add a repository-scoped task and ``pulpcore-manager backfill_npm_manifests`` command to populate manifests, integrity and shasum for existing npm content.
+  [#435](https://github.com/pulp/pulp_npm/issues/435)
+
+#### Bugfixes {: #0.11.0-bugfix }
+
+- Added the package name and version to registry metadata version entries.
+  [#395](https://github.com/pulp/pulp_npm/issues/395)
+- Serve validated npm package metadata and tarball integrity from the stored tarball, including deferred content, and reject conflicting republishes so clients resolve dependencies and verify downloads.
+  [#435](https://github.com/pulp/pulp_npm/issues/435)
+- Added an access policy allowing users with ``core.manage_content_labels`` to set and unset labels
+  on npm package content. Previously labeling was superuser-only.
+  [#441](https://github.com/pulp/pulp_npm/issues/441)
+
+---
+
 ## 0.10.2 (2026-10-13) {: #0.10.2 }
 
 #### Bugfixes {: #0.10.2-bugfix }

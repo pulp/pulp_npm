@@ -1,0 +1,2 @@
+Fixed pull-through metadata so that ``dist.tarball``, and therefore ``resolved`` in
+``package-lock.json``, points at Pulp instead of the upstream registry.
